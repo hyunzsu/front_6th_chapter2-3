@@ -1,38 +1,14 @@
 import { useEffect, useState } from "react"
 import { Edit2, MessageSquare, Plus, Search, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Textarea,
-} from "../components"
-import type {
-  PaginationParams,
-  SortParams,
-  SearchParams,
-  LoadingState,
-  DialogState,
-  SelectionState,
-} from "../shared/types"
+import { Button } from "../shared/ui/button"
+import { Input } from "../shared/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "../shared/ui/card"
+import { Textarea } from "../shared/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../shared/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../shared/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../shared/ui/table"
+
 import { CreatePostData, Post, PostWithAuthor } from "../entities/post/types"
 import { Tag } from "../entities/tag/types"
 import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "../entities/comment/types"
@@ -414,7 +390,10 @@ const PostsManager = () => {
               </div>
             </TableCell>
             <TableCell>
-              <div className="flex items-center space-x-2 cursor-pointer" onClick={() => openUserModal(post.author)}>
+              <div
+                className="flex items-center space-x-2 cursor-pointer"
+                onClick={() => openUserModal(post.author as UserProfile)}
+              >
                 <img src={post.author?.image} alt={post.author?.username} className="w-8 h-8 rounded-full" />
                 <span>{post.author?.username}</span>
               </div>
@@ -642,13 +621,13 @@ const PostsManager = () => {
             <Input
               placeholder="제목"
               value={selectedPost?.title || ""}
-              onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
+              onChange={(e) => selectedPost && setSelectedPost({ ...selectedPost, title: e.target.value })}
             />
             <Textarea
               rows={15}
               placeholder="내용"
               value={selectedPost?.body || ""}
-              onChange={(e) => setSelectedPost({ ...selectedPost, body: e.target.value })}
+              onChange={(e) => selectedPost && setSelectedPost({ ...selectedPost, body: e.target.value })}
             />
             <Button onClick={updatePost}>게시물 업데이트</Button>
           </div>
@@ -682,7 +661,7 @@ const PostsManager = () => {
             <Textarea
               placeholder="댓글 내용"
               value={selectedComment?.body || ""}
-              onChange={(e) => setSelectedComment({ ...selectedComment, body: e.target.value })}
+              onChange={(e) => selectedComment && setSelectedComment({ ...selectedComment, body: e.target.value })}
             />
             <Button onClick={updateComment}>댓글 업데이트</Button>
           </div>
@@ -693,11 +672,11 @@ const PostsManager = () => {
       <Dialog open={showPostDetailDialog} onOpenChange={setShowPostDetailDialog}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{highlightText(selectedPost?.title, searchQuery)}</DialogTitle>
+            <DialogTitle>{highlightText(selectedPost?.title || "", searchQuery)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p>{highlightText(selectedPost?.body, searchQuery)}</p>
-            {renderComments(selectedPost?.id)}
+            <p>{highlightText(selectedPost?.body || "", searchQuery)}</p>
+            {renderComments(selectedPost?.id || 0)}
           </div>
         </DialogContent>
       </Dialog>

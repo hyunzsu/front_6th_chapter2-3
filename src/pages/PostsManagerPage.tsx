@@ -12,9 +12,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { CreatePostData, Post, PostWithAuthor } from "../entities/post/types"
 import { Tag } from "../entities/tag/types"
 import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "../entities/comment/types"
-import { User, UserProfile, UsersResponse } from "../entities/user/types"
+import { User, UserProfile } from "../entities/user/types"
 import { PostsResponse } from "../entities/post/types/api"
 import { api } from "../shared/api"
+import { getTags } from "../entities/tag/api"
+import { getUserById, getUsers } from "../entities/user/api"
+import { getPosts } from "../entities/post/api"
+import { getComments } from "../entities/comment/api/commentApi"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -73,8 +77,8 @@ const PostsManager = () => {
 
     try {
       const [postsData, usersData] = await Promise.all([
-        api.get<PostsResponse>(`/posts?limit=${limit}&skip=${skip}`),
-        api.get<UsersResponse>("/users?limit=0&select=username,image"),
+        getPosts({ limit, skip }),
+        getUsers({ limit: 0, select: "username,image" }),
       ])
 
       const postsWithUsers: PostWithAuthor[] = postsData.posts.map((post: Post) => ({
@@ -94,7 +98,7 @@ const PostsManager = () => {
   // 태그 가져오기
   const fetchTags = async (): Promise<void> => {
     try {
-      const data: Tag[] = await api.get("/posts/tags")
+      const data = await getTags()
       setTags(data)
     } catch (error) {
       console.error("태그 가져오기 오류:", error)
@@ -128,7 +132,7 @@ const PostsManager = () => {
     try {
       const [postsData, usersData] = await Promise.all([
         api.get<PostsResponse>(`/posts/tag/${tag}`),
-        api.get<UsersResponse>("/users?limit=0&select=username,image"),
+        getUsers({ limit: 0, select: "username,image" }),
       ])
 
       const postsWithUsers: PostWithAuthor[] = postsData.posts.map((post: Post) => ({
@@ -184,7 +188,7 @@ const PostsManager = () => {
     if (comments[postId]) return // 이미 불러온 댓글이 있으면 다시 불러오지 않음
 
     try {
-      const data: CommentsResponse = await api.get(`/comments/post/${postId}`)
+      const data: CommentsResponse = await getComments(postId)
       setComments((prev: CommentsByPost) => ({ ...prev, [postId]: data.comments }))
     } catch (error) {
       console.error("댓글 가져오기 오류:", error)
@@ -263,7 +267,7 @@ const PostsManager = () => {
   // 사용자 모달 열기
   const openUserModal = async (user: UserProfile): Promise<void> => {
     try {
-      const userData: UserProfile = await api.get(`/users/${user.id}`)
+      const userData: UserProfile = await getUserById(user.id)
       setSelectedUser(userData)
       setShowUserModal(true)
     } catch (error) {

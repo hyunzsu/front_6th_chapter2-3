@@ -9,16 +9,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../shared/ui/d
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../shared/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../shared/ui/table"
 
-import { CreatePostData, Post, PostWithAuthor } from "../entities/post/types"
+import { CreatePostData, PostWithAuthor } from "../entities/post/types"
 import { Tag } from "../entities/tag/types"
 import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "../entities/comment/types"
-import { User, UserProfile } from "../entities/user/types"
-import { PostsResponse } from "../entities/post/types/api"
+import { UserProfile } from "../entities/user/types"
 import { api } from "../shared/api"
 import { getTags } from "../entities/tag/api"
-import { getUserById, getUsers } from "../entities/user/api"
-import { getPosts } from "../entities/post/api"
+import { getUserById } from "../entities/user/api"
 import { getComments } from "../entities/comment/api/commentApi"
+import { createPost } from "../features/post-management/create/api"
+import { updatePostApi } from "../features/post-management/update/api"
+import { deletePostApi } from "../features/post-management/list/api"
+import {
+  getPostsByTagWithAuthors,
+  getPostsWithAuthors,
+  searchPostsWithAuthors,
+} from "../features/post-management/list/api/compositePostApi"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -71,23 +77,13 @@ const PostsManager = () => {
     navigate(`?${params.toString()}`)
   }
 
-  // 게시물 가져오기
+  // 1. 게시물 조회
   const fetchPosts = async (): Promise<void> => {
     setLoading(true)
-
     try {
-      const [postsData, usersData] = await Promise.all([
-        getPosts({ limit, skip }),
-        getUsers({ limit: 0, select: "username,image" }),
-      ])
-
-      const postsWithUsers: PostWithAuthor[] = postsData.posts.map((post: Post) => ({
-        ...post,
-        author: usersData.users.find((user: User) => user.id === post.userId),
-      }))
-
-      setPosts(postsWithUsers)
-      setTotal(postsData.total)
+      const { posts, total } = await getPostsWithAuthors({ limit, skip })
+      setPosts(posts)
+      setTotal(total)
     } catch (error) {
       console.error("게시물 가져오기 오류:", error)
     } finally {
@@ -95,7 +91,7 @@ const PostsManager = () => {
     }
   }
 
-  // 태그 가져오기
+  // 2. 태그 조회
   const fetchTags = async (): Promise<void> => {
     try {
       const data = await getTags()
@@ -105,7 +101,7 @@ const PostsManager = () => {
     }
   }
 
-  // 게시물 검색
+  // 3. 게시물 검색
   const searchPosts = async (): Promise<void> => {
     if (!searchQuery) {
       fetchPosts()
@@ -113,16 +109,16 @@ const PostsManager = () => {
     }
     setLoading(true)
     try {
-      const data: PostsResponse = await api.get(`/posts/search?q=${searchQuery}`)
-      setPosts(data.posts)
-      setTotal(data.total)
+      const { posts, total } = await searchPostsWithAuthors(searchQuery)
+      setPosts(posts)
+      setTotal(total)
     } catch (error) {
       console.error("게시물 검색 오류:", error)
     }
     setLoading(false)
   }
 
-  // 태그별 게시물 가져오기
+  // 4. 태그별 게시물 조회
   const fetchPostsByTag = async (tag: string): Promise<void> => {
     if (!tag || tag === "all") {
       fetchPosts()
@@ -130,28 +126,19 @@ const PostsManager = () => {
     }
     setLoading(true)
     try {
-      const [postsData, usersData] = await Promise.all([
-        api.get<PostsResponse>(`/posts/tag/${tag}`),
-        getUsers({ limit: 0, select: "username,image" }),
-      ])
-
-      const postsWithUsers: PostWithAuthor[] = postsData.posts.map((post: Post) => ({
-        ...post,
-        author: usersData.users.find((user: User) => user.id === post.userId),
-      }))
-
-      setPosts(postsWithUsers)
-      setTotal(postsData.total)
+      const { posts, total } = await getPostsByTagWithAuthors(tag)
+      setPosts(posts)
+      setTotal(total)
     } catch (error) {
       console.error("태그별 게시물 가져오기 오류:", error)
     }
     setLoading(false)
   }
 
-  // 게시물 추가
+  // 5. 게시물 추가
   const addPost = async (): Promise<void> => {
     try {
-      const data: PostWithAuthor = await api.post("/posts/add", newPost)
+      const data: PostWithAuthor = await createPost(newPost)
       setPosts([data, ...posts])
       setShowAddDialog(false)
       setNewPost({ title: "", body: "", userId: 1 })
@@ -160,12 +147,12 @@ const PostsManager = () => {
     }
   }
 
-  // 게시물 업데이트
+  // 6. 게시물 수정
   const updatePost = async (): Promise<void> => {
     if (!selectedPost) return
 
     try {
-      const data: PostWithAuthor = await api.put(`/posts/${selectedPost.id}`, selectedPost)
+      const data: PostWithAuthor = await updatePostApi(selectedPost.id, selectedPost)
       setPosts(posts.map((post) => (post.id === data.id ? data : post)))
       setShowEditDialog(false)
     } catch (error) {
@@ -173,10 +160,10 @@ const PostsManager = () => {
     }
   }
 
-  // 게시물 삭제
+  // 7. 게시물 삭제
   const deletePost = async (id: number): Promise<void> => {
     try {
-      await api.delete(`/posts/${id}`)
+      await deletePostApi(id)
       setPosts(posts.filter((post: PostWithAuthor) => post.id !== id))
     } catch (error) {
       console.error("게시물 삭제 오류:", error)
@@ -185,7 +172,7 @@ const PostsManager = () => {
 
   // 댓글 가져오기
   const fetchComments = async (postId: number): Promise<void> => {
-    if (comments[postId]) return // 이미 불러온 댓글이 있으면 다시 불러오지 않음
+    if (comments[postId]) return
 
     try {
       const data: CommentsResponse = await getComments(postId)

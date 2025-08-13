@@ -13,18 +13,20 @@ import { CreatePostData, PostWithAuthor } from "../entities/post/types"
 import { Tag } from "../entities/tag/types"
 import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "../entities/comment/types"
 import { UserProfile } from "../entities/user/types"
-import { api } from "../shared/api"
 import { getTags } from "../entities/tag/api"
 import { getUserById } from "../entities/user/api"
 import { getComments } from "../entities/comment/api/commentApi"
 import { createPost } from "../features/post-management/create/api"
 import { updatePostApi } from "../features/post-management/update/api"
-import { deletePostApi } from "../features/post-management/list/api"
+import { deletePostApi } from "../features/post-management/update/api"
 import {
   getPostsByTagWithAuthors,
   getPostsWithAuthors,
   searchPostsWithAuthors,
 } from "../features/post-management/list/api/compositePostApi"
+import { createComment } from "../features/comment-management/create/api"
+import { deleteCommentApi, updateCommentApi } from "../features/comment-management/update/api"
+import { likeCommentApi } from "../features/comment-management/interactions/api"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -77,6 +79,9 @@ const PostsManager = () => {
     navigate(`?${params.toString()}`)
   }
 
+  // ------------------------------------------------------------
+  // 게시물 관련 함수
+  // ------------------------------------------------------------
   // 1. 게시물 조회
   const fetchPosts = async (): Promise<void> => {
     setLoading(true)
@@ -170,7 +175,10 @@ const PostsManager = () => {
     }
   }
 
-  // 댓글 가져오기
+  // ------------------------------------------------------------
+  // 댓글 관련 함수
+  // ------------------------------------------------------------
+  // 1. 댓글 가져오기
   const fetchComments = async (postId: number): Promise<void> => {
     if (comments[postId]) return
 
@@ -182,10 +190,10 @@ const PostsManager = () => {
     }
   }
 
-  // 댓글 추가
+  // 2. 댓글 생성
   const addComment = async (): Promise<void> => {
     try {
-      const data: Comment = await api.post("/comments/add", newComment)
+      const data: Comment = await createComment(newComment)
       setComments((prev: CommentsByPost) => ({
         ...prev,
         [data.postId]: [...(prev[data.postId] || []), data],
@@ -197,12 +205,12 @@ const PostsManager = () => {
     }
   }
 
-  // 댓글 업데이트
+  // 3. 댓글 업데이트
   const updateComment = async (): Promise<void> => {
     if (!selectedComment) return
 
     try {
-      const data: Comment = await api.put(`/comments/${selectedComment.id}`, { body: selectedComment.body })
+      const data: Comment = await updateCommentApi(selectedComment.id, { body: selectedComment.body })
       setComments((prev: CommentsByPost) => ({
         ...prev,
         [data.postId]: prev[data.postId].map((comment) => (comment.id === data.id ? data : comment)),
@@ -213,10 +221,10 @@ const PostsManager = () => {
     }
   }
 
-  // 댓글 삭제
+  // 4. 댓글 삭제
   const deleteComment = async (id: number, postId: number): Promise<void> => {
     try {
-      await api.delete(`/comments/${id}`)
+      await deleteCommentApi(id)
       setComments((prev: CommentsByPost) => ({
         ...prev,
         [postId]: prev[postId].filter((comment: Comment) => comment.id !== id),
@@ -226,13 +234,13 @@ const PostsManager = () => {
     }
   }
 
-  // 댓글 좋아요
+  // 5. 댓글 좋아요
   const likeComment = async (id: number, postId: number): Promise<void> => {
     try {
       const currentComment = comments[postId].find((c: Comment) => c.id === id)
       if (!currentComment) return
 
-      const data: Comment = await api.patch(`/comments/${id}`, { likes: currentComment.likes + 1 })
+      const data: Comment = await likeCommentApi(id, currentComment.likes + 1)
       setComments((prev: CommentsByPost) => ({
         ...prev,
         [postId]: prev[postId].map((comment: Comment) =>

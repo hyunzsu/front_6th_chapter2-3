@@ -1,4 +1,4 @@
-import { api } from "../../../../shared/api"
+import { api } from "../../../../shared/lib"
 import { UpdatePostData, PostWithAuthor } from "../../../../entities/post/types"
 
 /**

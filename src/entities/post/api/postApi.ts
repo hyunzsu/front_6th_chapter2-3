@@ -1,4 +1,4 @@
-import { api } from "../../../shared/api"
+import { api } from "../../../shared/lib"
 import { Post } from "../types"
 import { PostsResponse } from "../types/api"
 

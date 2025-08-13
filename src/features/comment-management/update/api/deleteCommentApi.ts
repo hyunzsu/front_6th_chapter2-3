@@ -1,4 +1,4 @@
-import { api } from "../../../../shared/api"
+import { api } from "../../../../shared/lib"
 
 /**
  * 댓글 삭제 API

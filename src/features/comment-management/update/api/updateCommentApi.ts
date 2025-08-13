@@ -1,5 +1,5 @@
 import { Comment, UpdateCommentData } from "../../../../entities/comment/types"
-import { api } from "../../../../shared/api"
+import { api } from "../../../../shared/lib"
 
 /**
  * 댓글 수정 API

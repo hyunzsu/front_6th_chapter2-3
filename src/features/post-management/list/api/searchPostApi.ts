@@ -1,5 +1,5 @@
 import { PostsResponse } from "../../../../entities/post/types/api"
-import { api } from "../../../../shared/api"
+import { api } from "../../../../shared/lib"
 
 /**
  * 게시물 검색 API

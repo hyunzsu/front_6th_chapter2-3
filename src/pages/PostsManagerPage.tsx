@@ -10,10 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../shared/ui/table"
 
 import { CreatePostData, PostWithAuthor } from "../entities/post/types"
-import { Tag } from "../entities/tag/types"
 import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "../entities/comment/types"
 import { UserProfile } from "../entities/user/types"
-import { getTags } from "../entities/tag/api"
+import { useTagsQuery } from "../entities/tag/api"
 import { getUserById } from "../entities/user/api"
 import { getComments } from "../entities/comment/api/commentApi"
 import { createPost } from "../features/post-management/create/api"
@@ -33,10 +32,11 @@ const PostsManager = () => {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
 
+  const { data: tags = [], isLoading } = useTagsQuery()
+
   // 데이터 관련 상태 (7개)
   const [posts, setPosts] = useState<PostWithAuthor[]>([]) // 게시물 목록
   const [total, setTotal] = useState<number>(0) // 전체 게시물 수
-  const [tags, setTags] = useState<Tag[]>([]) // 태그 목록
   const [comments, setComments] = useState<CommentsByPost>({}) // 댓글 객체
   const [selectedPost, setSelectedPost] = useState<PostWithAuthor | null>(null) // 선택된 게시물
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null) // 선택된 댓글
@@ -93,16 +93,6 @@ const PostsManager = () => {
       console.error("게시물 가져오기 오류:", error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  // 2. 태그 조회
-  const fetchTags = async (): Promise<void> => {
-    try {
-      const data = await getTags()
-      setTags(data)
-    } catch (error) {
-      console.error("태그 가져오기 오류:", error)
     }
   }
 
@@ -269,10 +259,6 @@ const PostsManager = () => {
       console.error("사용자 정보 가져오기 오류:", error)
     }
   }
-
-  useEffect(() => {
-    fetchTags()
-  }, [])
 
   useEffect(() => {
     if (selectedTag) {
@@ -473,17 +459,22 @@ const PostsManager = () => {
                 fetchPostsByTag(value)
                 updateURL()
               }}
+              disabled={isLoading}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="태그 선택" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">모든 태그</SelectItem>
-                {tags.map((tag) => (
-                  <SelectItem key={tag.url} value={tag.slug}>
-                    {tag.slug}
-                  </SelectItem>
-                ))}
+                {isLoading ? (
+                  <SelectItem value="loading">로딩 중...</SelectItem>
+                ) : (
+                  tags.map((tag) => (
+                    <SelectItem key={tag.url} value={tag.slug}>
+                      {tag.slug}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>

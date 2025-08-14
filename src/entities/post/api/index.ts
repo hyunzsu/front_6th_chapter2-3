@@ -1,1 +1,2 @@
-export * from "./postApi"
+export * from "./detailPostApi"
+export * from "./listPostApi"

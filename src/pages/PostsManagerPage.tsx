@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../shared/ui/table"
 
 import { CreatePostData, PostWithAuthor } from "../entities/post/types"
-import { CommentsByPost, Comment, CreateCommentData } from "../entities/comment/types"
+import { Comment, CreateCommentData } from "../entities/comment/types"
 import { UserProfile } from "../entities/user/types"
 import { useTagsQuery } from "../entities/tag/api"
 import { useCommentsQuery } from "../entities/comment/api"
@@ -33,7 +33,6 @@ const PostsManager = () => {
   const queryParams = new URLSearchParams(location.search)
 
   // 데이터 관련 상태 (4개)
-  const [comments, setComments] = useState<CommentsByPost>({}) // 댓글 객체 (수정/삭제용)
   const [selectedPost, setSelectedPost] = useState<PostWithAuthor | null>(null) // 선택된 게시물
   const [selectedComment, setSelectedComment] = useState<Comment | null>(null) // 선택된 댓글
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null) // 선택된 사용자 ID
@@ -127,8 +126,7 @@ const PostsManager = () => {
   // 댓글 관련 함수
   // ------------------------------------------------------------
 
-  // 2. 댓글 생성
-
+  // 1. 댓글 생성
   const addCommentHandler = useCallback((): void => {
     createComment(newComment, {
       onSuccess: () => {
@@ -141,12 +139,12 @@ const PostsManager = () => {
     })
   }, [createComment, newComment])
 
-  // 3. 댓글 업데이트
+  // 2. 댓글 업데이트
   const updateCommentHandler = useCallback((): void => {
     if (!selectedComment) return
 
     updateComment(
-      { id: selectedComment.id, data: { body: selectedComment.body } },
+      { id: selectedComment.id, data: { body: selectedComment.body }, postId: selectedComment.postId },
       {
         onSuccess: () => {
           setShowEditCommentDialog(false)
@@ -158,11 +156,11 @@ const PostsManager = () => {
     )
   }, [updateComment, selectedComment])
 
-  // 4. 댓글 삭제
+  // 3. 댓글 삭제
   const deleteCommentHandler = useCallback(
-    (id: number): void => {
+    (id: number, postId: number): void => {
       deleteComment(
-        { id },
+        { id, postId },
         {
           onError: (error) => {
             console.error("댓글 삭제 오류:", error)
@@ -173,14 +171,15 @@ const PostsManager = () => {
     [deleteComment],
   )
 
-  // 5. 댓글 좋아요
+  // 4. 댓글 좋아요
   const likeCommentHandler = useCallback(
     (id: number, postId: number): void => {
-      const currentComment = comments[postId]?.find((c: Comment) => c.id === id)
+      // ✅ commentsData에서 댓글 찾기
+      const currentComment = commentsData?.comments?.find((c: Comment) => c.id === id)
       if (!currentComment) return
 
       likeComment(
-        { id, likes: currentComment.likes + 1 },
+        { id, likes: currentComment.likes + 1, postId },
         {
           onError: (error) => {
             console.error("댓글 좋아요 오류:", error)
@@ -188,7 +187,7 @@ const PostsManager = () => {
         },
       )
     },
-    [likeComment, comments],
+    [likeComment, commentsData], // ✅ 의존성도 수정
   )
 
   // 게시물 상세 보기
@@ -328,7 +327,7 @@ const PostsManager = () => {
 
   // 댓글 렌더링
   const renderComments = (postId: number) => {
-    const displayComments = commentsData?.comments || comments[postId] || []
+    const displayComments = commentsData?.comments || []
 
     return (
       <div className="mt-2">
@@ -367,7 +366,7 @@ const PostsManager = () => {
                 >
                   <Edit2 className="w-3 h-3" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => deleteCommentHandler(comment.id)}>
+                <Button variant="ghost" size="sm" onClick={() => deleteCommentHandler(comment.id, postId)}>
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
@@ -573,7 +572,7 @@ const PostsManager = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p>{highlightText(selectedPost?.body || "", searchQuery)}</p>
-            {renderComments(selectedPost?.id || 0)}
+            {selectedPostId && renderComments(selectedPostId)}
           </div>
         </DialogContent>
       </Dialog>

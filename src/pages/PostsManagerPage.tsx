@@ -25,8 +25,9 @@ import { useLikeComment } from "../features/comment-management/interactions/api"
 import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
+
 import { CommentFormDialog } from "../features/comment-management/shared/ui"
-import { CommentItem } from "../features/comment-management/list/ui/CommentItem"
+import { CommentList } from "../features/comment-management/list/ui"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -221,6 +222,18 @@ const PostsManager = () => {
     [likeComment, commentsData],
   )
 
+  // 댓글 추가 모달 열기
+  const handleAddComment = useCallback((postId: number) => {
+    setSelectedPostId(postId)
+    setShowCommentCreateDialog(true)
+  }, [])
+
+  // 댓글 수정 모달 열기
+  const handleEditComment = useCallback((comment: Comment) => {
+    setSelectedComment(comment)
+    setShowCommentUpdateDialog(true)
+  }, [])
+
   // 게시물 상세 보기
   const openPostDetail = (post: PostWithAuthor): void => {
     setSelectedPost(post)
@@ -355,44 +368,6 @@ const PostsManager = () => {
       </TableBody>
     </Table>
   )
-
-  // 댓글 렌더링 수정
-  const renderComments = (postId: number) => {
-    const displayComments = commentsData?.comments || []
-
-    return (
-      <div className="mt-2">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold">댓글</h3>
-          <Button
-            size="sm"
-            onClick={() => {
-              setSelectedPostId(postId)
-              setShowCommentCreateDialog(true)
-            }}
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            댓글 추가
-          </Button>
-        </div>
-        <div className="space-y-1">
-          {displayComments.map((comment: Comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              searchQuery={searchQuery}
-              onLike={likeCommentHandler}
-              onEdit={(comment) => {
-                setSelectedComment(comment)
-                setShowCommentUpdateDialog(true)
-              }}
-              onDelete={deleteCommentHandler}
-            />
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
@@ -587,7 +562,17 @@ const PostsManager = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p>{highlightText(selectedPost?.body || "", searchQuery)}</p>
-            {selectedPostId && renderComments(selectedPostId)}
+            {selectedPostId && (
+              <CommentList
+                comments={commentsData?.comments || []}
+                postId={selectedPostId}
+                searchQuery={searchQuery}
+                onAddComment={handleAddComment}
+                onLikeComment={likeCommentHandler}
+                onEditComment={handleEditComment}
+                onDeleteComment={deleteCommentHandler}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

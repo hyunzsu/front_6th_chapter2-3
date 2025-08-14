@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../../shared/ui/dialog"
 import { Textarea } from "../../../../shared/ui/textarea"
 import { Button } from "../../../../shared/ui/button"
 import { Comment } from "../../../../entities/comment/types"
+import { useCreateComment } from "../../create/api"
+import { useUpdateComment } from "../../update/api"
 
 interface CommentFormDialogProps {
   mode: "create" | "update"
@@ -10,10 +12,12 @@ interface CommentFormDialogProps {
   onClose: () => void
   comment?: Comment | null
   postId?: number
-  onSubmit: (data: { body: string; postId?: number; commentId?: number }) => void
 }
 
-export const CommentFormDialog = ({ mode, isOpen, onClose, comment, postId, onSubmit }: CommentFormDialogProps) => {
+export const CommentFormDialog = ({ mode, isOpen, onClose, comment, postId }: CommentFormDialogProps) => {
+  const { mutate: createComment } = useCreateComment()
+  const { mutate: updateComment } = useUpdateComment()
+
   const [body, setBody] = useState("")
 
   // 모드나 comment가 변경될 때 body 초기화
@@ -25,17 +29,62 @@ export const CommentFormDialog = ({ mode, isOpen, onClose, comment, postId, onSu
     }
   }, [mode, comment, isOpen])
 
+  // 댓글 생성 핸들러
+  const handleCreate = useCallback(
+    (data: { body: string; postId: number }) => {
+      createComment(
+        {
+          body: data.body,
+          postId: data.postId,
+          userId: 1, // TODO: 실제 사용자 ID
+        },
+        {
+          onSuccess: () => {
+            handleClose()
+          },
+          onError: (error) => {
+            console.error("댓글 생성 오류:", error)
+          },
+        },
+      )
+    },
+    [createComment],
+  )
+
+  // 댓글 수정 핸들러
+  const handleUpdate = useCallback(
+    (data: { commentId: number; body: string; postId: number }) => {
+      updateComment(
+        {
+          id: data.commentId,
+          data: { body: data.body },
+          postId: data.postId,
+        },
+        {
+          onSuccess: () => {
+            handleClose()
+          },
+          onError: (error) => {
+            console.error("댓글 수정 오류:", error)
+          },
+        },
+      )
+    },
+    [updateComment],
+  )
+
   const handleSubmit = () => {
     if (!body.trim()) return
 
-    const submitData = {
-      body: body.trim(),
-      ...(mode === "create" && { postId }),
-      ...(mode === "update" && comment && { commentId: comment.id }),
+    if (mode === "create" && postId) {
+      handleCreate({ body: body.trim(), postId })
+    } else if (mode === "update" && comment) {
+      handleUpdate({
+        commentId: comment.id,
+        body: body.trim(),
+        postId: comment.postId,
+      })
     }
-
-    onSubmit(submitData)
-    handleClose()
   }
 
   const handleClose = () => {

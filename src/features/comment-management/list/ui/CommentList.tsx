@@ -1,55 +1,51 @@
 import { Plus } from "lucide-react"
 import { Button } from "../../../../shared/ui/button"
 import { Comment } from "../../../../entities/comment/types"
+import { useCommentsQuery } from "../../../../entities/comment/api"
+import { useModal } from "../../../../shared/hooks/useModal" // 직접 import
 import { CommentItem } from "./CommentItem"
+import { CommentFormDialog } from "../../shared/ui"
 
 interface CommentListProps {
-  comments: Comment[]
   postId: number
   searchQuery?: string
-  onAddComment: (postId: number) => void
-  onLikeComment: (commentId: number, postId: number) => void
-  onEditComment: (comment: Comment) => void
-  onDeleteComment: (commentId: number, postId: number) => void
 }
 
-export const CommentList = ({
-  comments,
-  postId,
-  searchQuery = "",
-  onAddComment,
-  onLikeComment,
-  onEditComment,
-  onDeleteComment,
-}: CommentListProps) => {
+export const CommentList = ({ postId, searchQuery = "" }: CommentListProps) => {
+  const { data: commentsData } = useCommentsQuery(postId)
+
+  const {
+    isModalOpen: isCreateModalOpen,
+    handleModalOpen: handleCreateModalOpen,
+    handleModalClose: handleCreateModalClose,
+  } = useModal()
+
   return (
-    <div className="mt-2">
-      {/* 댓글 헤더 */}
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold">댓글</h3>
-        <Button size="sm" onClick={() => onAddComment(postId)}>
-          <Plus className="w-3 h-3 mr-1" />
-          댓글 추가
-        </Button>
+    <>
+      <div className="mt-2">
+        {/* 댓글 헤더 */}
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold">댓글</h3>
+          <Button size="sm" onClick={handleCreateModalOpen}>
+            <Plus className="w-3 h-3 mr-1" />
+            댓글 추가
+          </Button>
+        </div>
+
+        {/* 댓글 목록 */}
+        <div className="space-y-1">
+          {commentsData?.comments.length === 0 ? (
+            <div className="text-center text-gray-500 text-sm py-4">댓글이 없습니다.</div>
+          ) : (
+            commentsData?.comments.map((comment: Comment) => (
+              <CommentItem key={comment.id} comment={comment} searchQuery={searchQuery} />
+            ))
+          )}
+        </div>
       </div>
 
-      {/* 댓글 목록 */}
-      <div className="space-y-1">
-        {comments.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm py-4">댓글이 없습니다.</div>
-        ) : (
-          comments.map((comment: Comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              searchQuery={searchQuery}
-              onLike={onLikeComment}
-              onEdit={onEditComment}
-              onDelete={onDeleteComment}
-            />
-          ))
-        )}
-      </div>
-    </div>
+      {/* 댓글 추가 모달 */}
+      <CommentFormDialog mode="create" isOpen={isCreateModalOpen} onClose={handleCreateModalClose} postId={postId} />
+    </>
   )
 }

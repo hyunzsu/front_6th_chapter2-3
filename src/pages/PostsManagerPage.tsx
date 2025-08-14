@@ -1,3 +1,4 @@
+// src/pages/PostsManagerPage.tsx
 import { useCallback, useEffect, useState } from "react"
 import { Edit2, MessageSquare, Plus, Search, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -10,23 +11,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../shared/ui/table"
 
 import { CreatePostData, PostWithAuthor } from "../entities/post/types"
-import { Comment } from "../entities/comment/types"
 import { UserProfile } from "../entities/user/types"
 import { useTagsQuery } from "../entities/tag/api"
-import { useCommentsQuery } from "../entities/comment/api"
 import { useUserQuery } from "../entities/user/api"
+import { useModal } from "../shared/hooks/useModal"
 
 import { useCreatePost } from "../features/post-management/create/api"
 import { useUpdatePost, useDeletePost } from "../features/post-management/update/api"
-
-import { useCreateComment } from "../features/comment-management/create/api"
-import { useDeleteComment, useUpdateComment } from "../features/comment-management/update/api"
-import { useLikeComment } from "../features/comment-management/interactions/api"
 import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
 
-import { CommentFormDialog } from "../features/comment-management/shared/ui"
 import { CommentList } from "../features/comment-management/list/ui"
 
 const PostsManager = () => {
@@ -34,31 +29,27 @@ const PostsManager = () => {
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
 
-  // 데이터 관련 상태 (4개)
-  const [selectedPost, setSelectedPost] = useState<PostWithAuthor | null>(null) // 선택된 게시물
-  const [selectedComment, setSelectedComment] = useState<Comment | null>(null) // 선택된 댓글
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null) // 선택된 사용자 ID
-  const [selectedPostId, setSelectedPostId] = useState<number | null>(null) // 댓글을 조회할 게시물 ID
+  // 데이터 관련 상태 (게시물만)
+  const [selectedPost, setSelectedPost] = useState<PostWithAuthor | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
-  // 검색/필터링 상태 (5개)
+  // 검색/필터링 상태
   const [searchQuery, setSearchQuery] = useState<string>(queryParams.get("search") || "")
   const [selectedTag, setSelectedTag] = useState<string>(queryParams.get("tag") || "")
   const [sortBy, setSortBy] = useState<string>(queryParams.get("sortBy") || "")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">((queryParams.get("sortOrder") as "asc" | "desc") || "asc")
 
-  // 페이지네이션 상태 (2개)
+  // 페이지네이션 상태
   const [skip, setSkip] = useState<number>(parseInt(queryParams.get("skip") || "0"))
   const [limit, setLimit] = useState<number>(parseInt(queryParams.get("limit") || "10"))
 
-  // 모달/다이얼로그 상태 수정
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false)
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false)
-  const [showCommentCreateDialog, setShowCommentCreateDialog] = useState<boolean>(false) // 변경
-  const [showCommentUpdateDialog, setShowCommentUpdateDialog] = useState<boolean>(false) // 변경
-  const [showPostDetailDialog, setShowPostDetailDialog] = useState<boolean>(false)
-  const [showUserModal, setShowUserModal] = useState<boolean>(false)
+  // 모달 상태 (게시물 관련만 - useModal 활용)
+  const addPostModal = useModal()
+  const editPostModal = useModal()
+  const postDetailModal = useModal()
+  const userModal = useModal()
 
-  // 폼 데이터 상태 (newComment 제거)
+  // 폼 데이터 상태
   const [newPost, setNewPost] = useState<CreatePostData>({ title: "", body: "", userId: 1 })
 
   // useQuery hooks
@@ -67,14 +58,8 @@ const PostsManager = () => {
   const { data: searchData, isLoading: searchLoading } = useSearchPostsQuery(searchQuery)
   const { data: tagData, isLoading: tagLoading } = usePostsByTagQuery(selectedTag)
   const { data: selectedUser = null } = useUserQuery(selectedUserId || 0)
-  const { data: commentsData } = useCommentsQuery(selectedPostId || 0)
 
-  // useMutation hooks
-  const { mutate: createComment } = useCreateComment()
-  const { mutate: updateComment } = useUpdateComment()
-  const { mutate: deleteComment } = useDeleteComment()
-  const { mutate: likeComment } = useLikeComment()
-
+  // useMutation hooks (게시물만)
   const { mutate: createPost } = useCreatePost()
   const { mutate: updatePostMutation } = useUpdatePost()
   const { mutate: deletePostMutation } = useDeletePost()
@@ -85,24 +70,20 @@ const PostsManager = () => {
   const total = currentData?.total || 0
   const isLoading = postsLoading || searchLoading || tagLoading
 
-  // ------------------------------------------------------------
-  // 게시물 관련 함수
-  // ------------------------------------------------------------
-
-  // 5. 게시물 추가
+  // 게시물 추가
   const addPostHandler = useCallback((): void => {
     createPost(newPost, {
       onSuccess: () => {
-        setShowAddDialog(false)
+        addPostModal.handleModalClose()
         setNewPost({ title: "", body: "", userId: 1 })
       },
       onError: (error) => {
         console.error("게시물 추가 오류:", error)
       },
     })
-  }, [createPost, newPost])
+  }, [createPost, newPost, addPostModal])
 
-  // 6. 게시물 수정
+  // 게시물 수정
   const updatePostHandler = useCallback((): void => {
     if (!selectedPost) return
 
@@ -110,16 +91,16 @@ const PostsManager = () => {
       { id: selectedPost.id, data: { title: selectedPost.title, body: selectedPost.body } },
       {
         onSuccess: () => {
-          setShowEditDialog(false)
+          editPostModal.handleModalClose()
         },
         onError: (error) => {
           console.error("게시물 업데이트 오류:", error)
         },
       },
     )
-  }, [updatePostMutation, selectedPost])
+  }, [updatePostMutation, selectedPost, editPostModal])
 
-  // 7. 게시물 삭제
+  // 게시물 삭제
   const deletePostHandler = useCallback(
     (id: number): void => {
       deletePostMutation(
@@ -134,117 +115,16 @@ const PostsManager = () => {
     [deletePostMutation],
   )
 
-  // ------------------------------------------------------------
-  // 댓글 관련 함수 수정
-  // ------------------------------------------------------------
-
-  // 1. 댓글 생성 핸들러 수정
-  const handleCommentCreate = useCallback(
-    (data: { body: string; postId?: number }) => {
-      if (!data.postId) return
-
-      createComment(
-        {
-          body: data.body,
-          postId: data.postId,
-          userId: 1, // 하드코딩된 값
-        },
-        {
-          onSuccess: () => {
-            setShowCommentCreateDialog(false)
-            // setSelectedPostId(null) 제거 - 댓글 목록 유지를 위해
-          },
-          onError: (error) => {
-            console.error("댓글 추가 오류:", error)
-          },
-        },
-      )
-    },
-    [createComment],
-  )
-
-  // 2. 댓글 수정 핸들러 수정
-  const handleCommentUpdate = useCallback(
-    (data: { body: string; commentId?: number }) => {
-      if (!data.commentId || !selectedComment) return
-
-      updateComment(
-        {
-          id: data.commentId,
-          data: { body: data.body },
-          postId: selectedComment.postId,
-        },
-        {
-          onSuccess: () => {
-            setShowCommentUpdateDialog(false)
-            setSelectedComment(null)
-          },
-          onError: (error) => {
-            console.error("댓글 업데이트 오류:", error)
-          },
-        },
-      )
-    },
-    [updateComment, selectedComment],
-  )
-
-  // 3. 댓글 삭제
-  const deleteCommentHandler = useCallback(
-    (id: number, postId: number): void => {
-      deleteComment(
-        { id, postId },
-        {
-          onError: (error) => {
-            console.error("댓글 삭제 오류:", error)
-          },
-        },
-      )
-    },
-    [deleteComment],
-  )
-
-  // 4. 댓글 좋아요
-  const likeCommentHandler = useCallback(
-    (id: number, postId: number): void => {
-      // commentsData에서 댓글 찾기
-      const currentComment = commentsData?.comments?.find((c: Comment) => c.id === id)
-      if (!currentComment) return
-
-      likeComment(
-        { id, likes: currentComment.likes + 1, postId },
-        {
-          onError: (error) => {
-            console.error("댓글 좋아요 오류:", error)
-          },
-        },
-      )
-    },
-    [likeComment, commentsData],
-  )
-
-  // 댓글 추가 모달 열기
-  const handleAddComment = useCallback((postId: number) => {
-    setSelectedPostId(postId)
-    setShowCommentCreateDialog(true)
-  }, [])
-
-  // 댓글 수정 모달 열기
-  const handleEditComment = useCallback((comment: Comment) => {
-    setSelectedComment(comment)
-    setShowCommentUpdateDialog(true)
-  }, [])
-
   // 게시물 상세 보기
   const openPostDetail = (post: PostWithAuthor): void => {
     setSelectedPost(post)
-    setSelectedPostId(post.id)
-    setShowPostDetailDialog(true)
+    postDetailModal.handleModalOpen()
   }
 
   // 사용자 모달 열기
   const openUserModal = (user: UserProfile): void => {
     setSelectedUserId(user.id)
-    setShowUserModal(true)
+    userModal.handleModalOpen()
   }
 
   const handleUpdateURL = useCallback(() => {
@@ -272,7 +152,7 @@ const PostsManager = () => {
     setSelectedTag(params.get("tag") || "")
   }, [location.search])
 
-  // 하이라이트 함수 추가
+  // 하이라이트 함수
   const highlightText = (text: string, highlight: string) => {
     if (!text) return null
     if (!highlight.trim()) {
@@ -306,7 +186,6 @@ const PostsManager = () => {
             <TableCell>
               <div className="space-y-1">
                 <div>{highlightText(post.title, searchQuery)}</div>
-
                 <div className="flex flex-wrap gap-1">
                   {post.tags?.map((tag: string) => (
                     <span
@@ -353,7 +232,7 @@ const PostsManager = () => {
                   size="sm"
                   onClick={() => {
                     setSelectedPost(post)
-                    setShowEditDialog(true)
+                    editPostModal.handleModalOpen()
                   }}
                 >
                   <Edit2 className="w-4 h-4" />
@@ -374,7 +253,7 @@ const PostsManager = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>게시물 관리자</span>
-          <Button onClick={() => setShowAddDialog(true)}>
+          <Button onClick={addPostModal.handleModalOpen}>
             <Plus className="w-4 h-4 mr-2" />
             게시물 추가
           </Button>
@@ -469,7 +348,7 @@ const PostsManager = () => {
       </CardContent>
 
       {/* 게시물 추가 대화상자 */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={addPostModal.isModalOpen} onOpenChange={addPostModal.handleModalClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>새 게시물 추가</DialogTitle>
@@ -500,7 +379,7 @@ const PostsManager = () => {
       </Dialog>
 
       {/* 게시물 수정 대화상자 */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog open={editPostModal.isModalOpen} onOpenChange={editPostModal.handleModalClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>게시물 수정</DialogTitle>
@@ -522,63 +401,23 @@ const PostsManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* CommentFormDialog들로 교체 */}
-      <CommentFormDialog
-        mode="create"
-        isOpen={showCommentCreateDialog}
-        onClose={() => {
-          setShowCommentCreateDialog(false)
-          // setSelectedPostId(null) 제거 - 댓글 목록 유지를 위해
-        }}
-        postId={selectedPostId || undefined}
-        onSubmit={handleCommentCreate}
-      />
-
-      <CommentFormDialog
-        mode="update"
-        isOpen={showCommentUpdateDialog}
-        onClose={() => {
-          setShowCommentUpdateDialog(false)
-          setSelectedComment(null)
-          // selectedPostId는 유지 - 댓글 목록 유지를 위해
-        }}
-        comment={selectedComment}
-        onSubmit={handleCommentUpdate}
-      />
-
       {/* 게시물 상세 보기 대화상자 */}
-      <Dialog
-        open={showPostDetailDialog}
-        onOpenChange={(open) => {
-          setShowPostDetailDialog(open)
-          if (!open) {
-            setSelectedPostId(null) // 다이얼로그 닫을 때만 selectedPostId 초기화
-          }
-        }}
-      >
+      <Dialog open={postDetailModal.isModalOpen} onOpenChange={postDetailModal.handleModalClose}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{highlightText(selectedPost?.title || "", searchQuery)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p>{highlightText(selectedPost?.body || "", searchQuery)}</p>
-            {selectedPostId && (
-              <CommentList
-                comments={commentsData?.comments || []}
-                postId={selectedPostId}
-                searchQuery={searchQuery}
-                onAddComment={handleAddComment}
-                onLikeComment={likeCommentHandler}
-                onEditComment={handleEditComment}
-                onDeleteComment={deleteCommentHandler}
-              />
-            )}
+
+            {/* 댓글 위젯 */}
+            {selectedPost && <CommentList postId={selectedPost.id} searchQuery={searchQuery} />}
           </div>
         </DialogContent>
       </Dialog>
 
       {/* 사용자 모달 */}
-      <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
+      <Dialog open={userModal.isModalOpen} onOpenChange={userModal.handleModalClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>사용자 정보</DialogTitle>

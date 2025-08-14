@@ -1,1 +1,1 @@
-export * from "./dummyJson"
+export * from "./comment"

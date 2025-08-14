@@ -1,1 +1,1 @@
-export * from "./commentInteractionsApi"
+export * from "./interactionsCommentApi"

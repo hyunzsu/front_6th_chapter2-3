@@ -14,7 +14,7 @@ import { CommentsByPost, CommentsResponse, Comment, CreateCommentData } from "..
 import { UserProfile } from "../entities/user/types"
 import { useTagsQuery } from "../entities/tag/api"
 import { getUserById } from "../entities/user/api"
-import { getComments } from "../entities/comment/api/commentApi"
+import { getComments } from "../entities/comment/api/listCommentApi"
 import { createPost } from "../features/post-management/create/api"
 import { updatePostApi } from "../features/post-management/update/api"
 import { deletePostApi } from "../features/post-management/update/api"

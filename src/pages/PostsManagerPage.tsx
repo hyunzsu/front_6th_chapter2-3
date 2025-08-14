@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { Edit2, MessageSquare, Plus, Search, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { useAtom, useAtomValue } from "jotai"
+
 import { Button } from "../shared/ui/button"
 import { Input } from "../shared/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "../shared/ui/card"
@@ -13,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { CreatePostData, PostWithAuthor } from "../entities/post/types"
 import { UserProfile } from "../entities/user/types"
 import { useTagsQuery } from "../entities/tag/api"
-import { useUserQuery } from "../entities/user/api"
 import { useModal } from "../shared/hooks/useModal"
 
 import { useCreatePost } from "../features/post-management/create/api"
@@ -21,27 +22,38 @@ import { useUpdatePost, useDeletePost } from "../features/post-management/update
 import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
-
 import { CommentList } from "../features/comment-management/list/ui"
+
+// 🆕 store와 분리된 컴포넌트들 import
+import {
+  postsLimitAtom,
+  postsSkipAtom,
+  postsPageAtom,
+  setPostsPageAtom,
+  setPostsLimitAtom,
+} from "../features/post-management/list/store"
+import { PaginationControls } from "../features/post-management/list/ui"
+import { UserInfoDialog } from "../features/post-management/list/ui"
 
 const PostsManager = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const queryParams = new URLSearchParams(location.search)
 
+  const limit = useAtomValue(postsLimitAtom)
+  const skip = useAtomValue(postsSkipAtom)
+  const [, setPage] = useAtom(setPostsPageAtom)
+  const [, setLimit] = useAtom(setPostsLimitAtom)
+
   // 데이터 관련 상태 (게시물만)
   const [selectedPost, setSelectedPost] = useState<PostWithAuthor | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
-  // 검색/필터링 상태
+  // 검색/필터링 상태 (아직 store로 이전하지 않음 - 3단계에서 처리)
   const [searchQuery, setSearchQuery] = useState<string>(queryParams.get("search") || "")
   const [selectedTag, setSelectedTag] = useState<string>(queryParams.get("tag") || "")
   const [sortBy, setSortBy] = useState<string>(queryParams.get("sortBy") || "")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">((queryParams.get("sortOrder") as "asc" | "desc") || "asc")
-
-  // 페이지네이션 상태
-  const [skip, setSkip] = useState<number>(parseInt(queryParams.get("skip") || "0"))
-  const [limit, setLimit] = useState<number>(parseInt(queryParams.get("limit") || "10"))
 
   // 모달 상태 (게시물 관련만 - useModal 활용)
   const addPostModal = useModal()
@@ -57,7 +69,6 @@ const PostsManager = () => {
   const { data: postsData, isLoading: postsLoading } = usePostsWithAuthorsQuery({ limit, skip })
   const { data: searchData, isLoading: searchLoading } = useSearchPostsQuery(searchQuery)
   const { data: tagData, isLoading: tagLoading } = usePostsByTagQuery(selectedTag)
-  const { data: selectedUser = null } = useUserQuery(selectedUserId || 0)
 
   // useMutation hooks (게시물만)
   const { mutate: createPost } = useCreatePost()
@@ -121,7 +132,7 @@ const PostsManager = () => {
     postDetailModal.handleModalOpen()
   }
 
-  // 사용자 모달 열기
+  // 사용자 모달 열기 함수 수정
   const openUserModal = (user: UserProfile): void => {
     setSelectedUserId(user.id)
     userModal.handleModalOpen()
@@ -142,15 +153,20 @@ const PostsManager = () => {
     handleUpdateURL()
   }, [handleUpdateURL])
 
+  // URL 파라미터 동기화 (store 사용)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    setSkip(parseInt(params.get("skip") || "0"))
-    setLimit(parseInt(params.get("limit") || "10"))
+    const newSkip = parseInt(params.get("skip") || "0")
+    const newLimit = parseInt(params.get("limit") || "10")
+    const newPage = Math.floor(newSkip / newLimit) + 1
+
+    setLimit(newLimit)
+    setPage(newPage)
     setSearchQuery(params.get("search") || "")
     setSortBy(params.get("sortBy") || "")
     setSortOrder((params.get("sortOrder") as "asc" | "desc") || "asc")
     setSelectedTag(params.get("tag") || "")
-  }, [location.search])
+  }, [location.search, setLimit, setPage])
 
   // 하이라이트 함수
   const highlightText = (text: string, highlight: string) => {
@@ -319,31 +335,8 @@ const PostsManager = () => {
           {/* 게시물 테이블 */}
           {isLoading ? <div className="flex justify-center p-4">로딩 중...</div> : renderPostTable()}
 
-          {/* 페이지네이션 */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <span>표시</span>
-              <Select value={limit.toString()} onValueChange={(value) => setLimit(Number(value))}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="10" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="30">30</SelectItem>
-                </SelectContent>
-              </Select>
-              <span>항목</span>
-            </div>
-            <div className="flex gap-2">
-              <Button disabled={skip === 0} onClick={() => setSkip(Math.max(0, skip - limit))}>
-                이전
-              </Button>
-              <Button disabled={skip + limit >= total} onClick={() => setSkip(skip + limit)}>
-                다음
-              </Button>
-            </div>
-          </div>
+          {/* 페이지네이션 컴포넌트 교체 */}
+          <PaginationControls total={total} />
         </div>
       </CardContent>
 
@@ -416,39 +409,8 @@ const PostsManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 사용자 모달 */}
-      <Dialog open={userModal.isModalOpen} onOpenChange={userModal.handleModalClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>사용자 정보</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <img src={selectedUser?.image} alt={selectedUser?.username} className="w-24 h-24 rounded-full mx-auto" />
-            <h3 className="text-xl font-semibold text-center">{selectedUser?.username}</h3>
-            <div className="space-y-2">
-              <p>
-                <strong>이름:</strong> {selectedUser?.firstName} {selectedUser?.lastName}
-              </p>
-              <p>
-                <strong>나이:</strong> {selectedUser?.age}
-              </p>
-              <p>
-                <strong>이메일:</strong> {selectedUser?.email}
-              </p>
-              <p>
-                <strong>전화번호:</strong> {selectedUser?.phone}
-              </p>
-              <p>
-                <strong>주소:</strong> {selectedUser?.address?.address}, {selectedUser?.address?.city},{" "}
-                {selectedUser?.address?.state}
-              </p>
-              <p>
-                <strong>직장:</strong> {selectedUser?.company?.name} - {selectedUser?.company?.title}
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 사용자 모달 컴포넌트 교체 */}
+      <UserInfoDialog isOpen={userModal.isModalOpen} onClose={userModal.handleModalClose} userId={selectedUserId} />
     </Card>
   )
 }

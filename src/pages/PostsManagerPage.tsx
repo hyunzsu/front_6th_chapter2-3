@@ -25,9 +25,8 @@ import { useLikeComment } from "../features/comment-management/interactions/api"
 import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
-
-// CommentFormDialog import 추가
-import { CommentFormDialog, CommentControlPanel } from "../features/comment-management/shared/ui"
+import { CommentFormDialog } from "../features/comment-management/shared/ui"
+import { CommentItem } from "../features/comment-management/list/ui/CommentItem"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -378,21 +377,17 @@ const PostsManager = () => {
         </div>
         <div className="space-y-1">
           {displayComments.map((comment: Comment) => (
-            <div key={comment.id} className="flex items-center justify-between text-sm border-b pb-1">
-              <div className="flex items-center space-x-2 overflow-hidden">
-                <span className="font-medium truncate">{comment.user.username}:</span>
-                <span className="truncate">{highlightText(comment.body, searchQuery)}</span>
-              </div>
-              <CommentControlPanel
-                comment={comment}
-                onLike={likeCommentHandler}
-                onEdit={(comment) => {
-                  setSelectedComment(comment)
-                  setShowCommentUpdateDialog(true)
-                }}
-                onDelete={deleteCommentHandler}
-              />
-            </div>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              searchQuery={searchQuery}
+              onLike={likeCommentHandler}
+              onEdit={(comment) => {
+                setSelectedComment(comment)
+                setShowCommentUpdateDialog(true)
+              }}
+              onDelete={deleteCommentHandler}
+            />
           ))}
         </div>
       </div>

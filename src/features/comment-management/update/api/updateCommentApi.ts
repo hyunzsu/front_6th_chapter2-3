@@ -1,23 +1,41 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Comment, UpdateCommentData } from "../../../../entities/comment/types"
+import { Comment, UpdateCommentData, CommentsResponse } from "../../../../entities/comment/types"
 import { api } from "../../../../shared/lib"
+import { isNewlyCreatedComment } from "../../../../entities/comment/lib"
 
 /**
  * 댓글 수정 API
  */
-export const updateCommentApi = async (id: number, data: UpdateCommentData): Promise<Comment> => {
+const updateCommentApi = async (id: number, data: UpdateCommentData): Promise<Comment> => {
   return api.put<Comment>(`/comments/${id}`, data)
 }
+
+const createMockUpdateResponse = (id: number, data: UpdateCommentData): Comment => ({
+  id,
+  body: data.body,
+  postId: 0,
+  likes: 0,
+  user: { id: 1, username: "User", image: "" },
+})
 
 export const useUpdateComment = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationKey: ["updateComment"],
-    mutationFn: ({ id, data }: { id: number; data: UpdateCommentData }) => updateCommentApi(id, data),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["comments", data.postId],
+    mutationFn: ({ id, data }: { id: number; data: UpdateCommentData; postId: number }) => {
+      return isNewlyCreatedComment(id)
+        ? Promise.resolve(createMockUpdateResponse(id, data))
+        : updateCommentApi(id, data)
+    },
+    onMutate: async ({ id, data, postId }: { id: number; data: UpdateCommentData; postId: number }) => {
+      queryClient.setQueryData<CommentsResponse>(["comments", postId], (oldData) => {
+        if (!oldData) return oldData
+
+        return {
+          ...oldData,
+          comments: oldData.comments.map((comment) => (comment.id === id ? { ...comment, ...data } : comment)),
+        }
       })
     },
   })

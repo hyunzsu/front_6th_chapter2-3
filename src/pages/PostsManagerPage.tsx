@@ -26,7 +26,8 @@ import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
 
-import { CommentFormDialog } from "../features/comment-management/shared/ui"
+// CommentFormDialog import 추가
+import { CommentFormDialog, CommentControlPanel } from "../features/comment-management/shared/ui"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -382,25 +383,15 @@ const PostsManager = () => {
                 <span className="font-medium truncate">{comment.user.username}:</span>
                 <span className="truncate">{highlightText(comment.body, searchQuery)}</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <Button variant="ghost" size="sm" onClick={() => likeCommentHandler(comment.id, postId)}>
-                  <ThumbsUp className="w-3 h-3" />
-                  <span className="ml-1 text-xs">{comment.likes}</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedComment(comment)
-                    setShowCommentUpdateDialog(true)
-                  }}
-                >
-                  <Edit2 className="w-3 h-3" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => deleteCommentHandler(comment.id, postId)}>
-                  <Trash2 className="w-3 h-3" />
-                </Button>
-              </div>
+              <CommentControlPanel
+                comment={comment}
+                onLike={likeCommentHandler}
+                onEdit={(comment) => {
+                  setSelectedComment(comment)
+                  setShowCommentUpdateDialog(true)
+                }}
+                onDelete={deleteCommentHandler}
+              />
             </div>
           ))}
         </div>

@@ -1,0 +1,104 @@
+import { ThumbsDown, ThumbsUp } from "lucide-react"
+import { useAtom, useAtomValue } from "jotai"
+import { TableCell, TableRow } from "../../../../shared/ui/table"
+import { PostWithAuthor } from "../../../../entities/post/types"
+import { postsSearchQueryAtom, postsSelectedTagAtom } from "../store"
+import { useModal } from "../../../../shared/hooks/useModal"
+import { PostActionPanel } from "./PostActionPanel"
+import { UserInfoDialog } from "./UserInfoDialog"
+
+interface PostTableRowProps {
+  post: PostWithAuthor
+}
+
+export const PostTableRow = ({ post }: PostTableRowProps) => {
+  const searchQuery = useAtomValue(postsSearchQueryAtom)
+  const selectedTag = useAtomValue(postsSelectedTagAtom)
+  const [, setSelectedTag] = useAtom(postsSelectedTagAtom)
+
+  const userModal = useModal()
+
+  // 하이라이트 함수
+  const highlightText = (text: string, highlight: string) => {
+    if (!text) return null
+    if (!highlight.trim()) {
+      return <span>{text}</span>
+    }
+    const regex = new RegExp(`(${highlight})`, "gi")
+    const parts = text.split(regex)
+    return (
+      <span>
+        {parts.map((part, i) => (regex.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>))}
+      </span>
+    )
+  }
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(tag)
+  }
+
+  const handleUserClick = () => {
+    userModal.handleModalOpen()
+  }
+
+  return (
+    <>
+      <TableRow key={post.id}>
+        {/* ID */}
+        <TableCell>{post.id}</TableCell>
+
+        {/* 제목 & 태그 */}
+        <TableCell>
+          <div className="space-y-1">
+            <div>{highlightText(post.title, searchQuery)}</div>
+            <div className="flex flex-wrap gap-1">
+              {post.tags?.map((tag: string) => (
+                <span
+                  key={tag}
+                  className={`px-1 text-[9px] font-semibold rounded-[4px] cursor-pointer ${
+                    selectedTag === tag
+                      ? "text-white bg-blue-500 hover:bg-blue-600"
+                      : "text-blue-800 bg-blue-100 hover:bg-blue-200"
+                  }`}
+                  onClick={() => handleTagClick(tag)}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </TableCell>
+
+        {/* 작성자 */}
+        <TableCell>
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={handleUserClick}>
+            <img src={post.author?.image} alt={post.author?.username} className="w-8 h-8 rounded-full" />
+            <span>{post.author?.username}</span>
+          </div>
+        </TableCell>
+
+        {/* 반응 */}
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <ThumbsUp className="w-4 h-4" />
+            <span>{post.reactions?.likes || 0}</span>
+            <ThumbsDown className="w-4 h-4" />
+            <span>{post.reactions?.dislikes || 0}</span>
+          </div>
+        </TableCell>
+
+        {/* 액션 버튼들 */}
+        <TableCell>
+          <PostActionPanel post={post} />
+        </TableCell>
+      </TableRow>
+
+      {/* 사용자 모달 */}
+      <UserInfoDialog
+        isOpen={userModal.isModalOpen}
+        onClose={userModal.handleModalClose}
+        userId={post.author?.id || null}
+      />
+    </>
+  )
+}

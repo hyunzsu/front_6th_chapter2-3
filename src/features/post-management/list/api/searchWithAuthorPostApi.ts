@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { Post, PostWithAuthor } from "../../../../entities/post/types"
-import { getUsers } from "../../../../entities/user/api"
+import { fetchUsers } from "../../../../entities/user/api"
 import { User } from "../../../../entities/user/types"
 import { searchPosts } from "./searchPostApi"
 
@@ -12,7 +12,7 @@ export const fetchSearchPostsWithAuthors = async (
 ): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
     searchPosts(query),
-    getUsers({ limit: 0, select: "username,image" }),
+    fetchUsers({ limit: 0, select: "username,image" }),
   ])
 
   const postsWithUsers: PostWithAuthor[] = postsData.posts.map((post: Post) => ({

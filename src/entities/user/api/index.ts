@@ -1,1 +1,2 @@
-export * from "./userApi"
+export * from "./listUserApi"
+export * from "./detailUserApi"

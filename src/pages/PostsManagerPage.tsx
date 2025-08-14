@@ -174,7 +174,7 @@ const PostsManager = () => {
   // 4. 댓글 좋아요
   const likeCommentHandler = useCallback(
     (id: number, postId: number): void => {
-      // ✅ commentsData에서 댓글 찾기
+      // commentsData에서 댓글 찾기
       const currentComment = commentsData?.comments?.find((c: Comment) => c.id === id)
       if (!currentComment) return
 
@@ -187,7 +187,7 @@ const PostsManager = () => {
         },
       )
     },
-    [likeComment, commentsData], // ✅ 의존성도 수정
+    [likeComment, commentsData],
   )
 
   // 게시물 상세 보기

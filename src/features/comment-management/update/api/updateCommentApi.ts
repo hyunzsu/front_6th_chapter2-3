@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Comment, UpdateCommentData, CommentsResponse } from "../../../../entities/comment/types"
 import { api } from "../../../../shared/lib"
-import { isNewlyCreatedComment } from "../../../../entities/comment/lib"
+import { isNewlyCreatedComment, createMockComment } from "../../../../entities/comment/lib"
 
 /**
  * 댓글 수정 API
@@ -10,14 +10,6 @@ const updateCommentApi = async (id: number, data: UpdateCommentData): Promise<Co
   return api.put<Comment>(`/comments/${id}`, data)
 }
 
-const createMockUpdateResponse = (id: number, data: UpdateCommentData): Comment => ({
-  id,
-  body: data.body,
-  postId: 0,
-  likes: 0,
-  user: { id: 1, username: "User", image: "" },
-})
-
 export const useUpdateComment = () => {
   const queryClient = useQueryClient()
 
@@ -25,7 +17,7 @@ export const useUpdateComment = () => {
     mutationKey: ["updateComment"],
     mutationFn: ({ id, data }: { id: number; data: UpdateCommentData; postId: number }) => {
       return isNewlyCreatedComment(id)
-        ? Promise.resolve(createMockUpdateResponse(id, data))
+        ? Promise.resolve(createMockComment({ id, body: data.body }))
         : updateCommentApi(id, data)
     },
     onMutate: async ({ id, data, postId }: { id: number; data: UpdateCommentData; postId: number }) => {

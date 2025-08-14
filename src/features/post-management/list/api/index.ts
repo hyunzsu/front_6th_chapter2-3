@@ -1,3 +1,5 @@
+export * from "./tagWithAuthorPostApi"
+export * from "./searchWithAuthorPostApi"
+export * from "./listWithAuthorPostApi"
 export * from "./filterPostApi"
 export * from "./searchPostApi"
-export * from "./compositePostApi"

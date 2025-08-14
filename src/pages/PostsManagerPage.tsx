@@ -20,9 +20,9 @@ import { createPost } from "../features/post-management/create/api"
 import { updatePostApi } from "../features/post-management/update/api"
 import { deletePostApi } from "../features/post-management/update/api"
 
-import { createComment } from "../features/comment-management/create/api"
-import { deleteCommentApi, updateCommentApi } from "../features/comment-management/update/api"
-import { likeCommentApi } from "../features/comment-management/interactions/api"
+import { useCreateComment } from "../features/comment-management/create/api"
+import { useDeleteComment, useUpdateComment } from "../features/comment-management/update/api"
+import { useLikeComment } from "../features/comment-management/interactions/api"
 import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
 import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
 import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
@@ -68,6 +68,12 @@ const PostsManager = () => {
   const { data: tagData, isLoading: tagLoading } = usePostsByTagQuery(selectedTag)
   const { data: selectedUser = null } = useUserQuery(selectedUserId || 0)
   const { data: commentsData } = useCommentsQuery(selectedPostId || 0)
+
+  // useMutation hooks
+  const { mutate: createComment } = useCreateComment()
+  const { mutate: updateComment } = useUpdateComment()
+  const { mutate: deleteComment } = useDeleteComment()
+  const { mutate: likeComment } = useLikeComment()
 
   // 현재 표시할 데이터 결정
   const currentData = searchQuery ? searchData : selectedTag ? tagData : postsData
@@ -122,74 +128,68 @@ const PostsManager = () => {
   // ------------------------------------------------------------
 
   // 2. 댓글 생성
-  const addComment = async (): Promise<void> => {
-    try {
-      const data: Comment = await createComment(newComment)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setComments((prev: CommentsByPost) => ({
-        ...prev,
-        [data.postId]: [...(prev[data.postId] || []), data],
-      }))
-      setShowAddCommentDialog(false)
-      setNewComment({ body: "", postId: 0, userId: 1 })
-    } catch (error) {
-      console.error("댓글 추가 오류:", error)
-    }
-  }
+
+  const addCommentHandler = useCallback((): void => {
+    createComment(newComment, {
+      onSuccess: () => {
+        setShowAddCommentDialog(false)
+        setNewComment({ body: "", postId: 0, userId: 1 })
+      },
+      onError: (error) => {
+        console.error("댓글 추가 오류:", error)
+      },
+    })
+  }, [createComment, newComment])
 
   // 3. 댓글 업데이트
-  const updateComment = async (): Promise<void> => {
+  const updateCommentHandler = useCallback((): void => {
     if (!selectedComment) return
 
-    try {
-      const data: Comment = await updateCommentApi(selectedComment.id, { body: selectedComment.body })
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setComments((prev: CommentsByPost) => ({
-        ...prev,
-        [data.postId]: prev[data.postId].map((comment) => (comment.id === data.id ? data : comment)),
-      }))
-      setShowEditCommentDialog(false)
-    } catch (error) {
-      console.error("댓글 업데이트 오류:", error)
-    }
-  }
+    updateComment(
+      { id: selectedComment.id, data: { body: selectedComment.body } },
+      {
+        onSuccess: () => {
+          setShowEditCommentDialog(false)
+        },
+        onError: (error) => {
+          console.error("댓글 업데이트 오류:", error)
+        },
+      },
+    )
+  }, [updateComment, selectedComment])
 
   // 4. 댓글 삭제
-  const deleteComment = async (id: number, postId: number): Promise<void> => {
-    try {
-      await deleteCommentApi(id)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setComments((prev: CommentsByPost) => ({
-        ...prev,
-        [postId]: prev[postId].filter((comment: Comment) => comment.id !== id),
-      }))
-    } catch (error) {
-      console.error("댓글 삭제 오류:", error)
-    }
-  }
+  const deleteCommentHandler = useCallback(
+    (id: number): void => {
+      deleteComment(
+        { id },
+        {
+          onError: (error) => {
+            console.error("댓글 삭제 오류:", error)
+          },
+        },
+      )
+    },
+    [deleteComment],
+  )
 
   // 5. 댓글 좋아요
-  const likeComment = async (id: number, postId: number): Promise<void> => {
-    try {
-      const currentComment = comments[postId].find((c: Comment) => c.id === id)
+  const likeCommentHandler = useCallback(
+    (id: number, postId: number): void => {
+      const currentComment = comments[postId]?.find((c: Comment) => c.id === id)
       if (!currentComment) return
 
-      const data: Comment = await likeCommentApi(id, currentComment.likes + 1)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setComments((prev: CommentsByPost) => ({
-        ...prev,
-        [postId]: prev[postId].map((comment: Comment) =>
-          comment.id === data.id ? { ...data, likes: currentComment.likes + 1 } : comment,
-        ),
-      }))
-    } catch (error) {
-      console.error("댓글 좋아요 오류:", error)
-    }
-  }
+      likeComment(
+        { id, likes: currentComment.likes + 1 },
+        {
+          onError: (error) => {
+            console.error("댓글 좋아요 오류:", error)
+          },
+        },
+      )
+    },
+    [likeComment, comments],
+  )
 
   // 게시물 상세 보기
   const openPostDetail = (post: PostWithAuthor): void => {
@@ -353,7 +353,7 @@ const PostsManager = () => {
                 <span className="truncate">{highlightText(comment.body, searchQuery)}</span>
               </div>
               <div className="flex items-center space-x-1">
-                <Button variant="ghost" size="sm" onClick={() => likeComment(comment.id, postId)}>
+                <Button variant="ghost" size="sm" onClick={() => likeCommentHandler(comment.id, postId)}>
                   <ThumbsUp className="w-3 h-3" />
                   <span className="ml-1 text-xs">{comment.likes}</span>
                 </Button>
@@ -367,7 +367,7 @@ const PostsManager = () => {
                 >
                   <Edit2 className="w-3 h-3" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => deleteComment(comment.id, postId)}>
+                <Button variant="ghost" size="sm" onClick={() => deleteCommentHandler(comment.id)}>
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
@@ -543,7 +543,7 @@ const PostsManager = () => {
               value={newComment.body}
               onChange={(e) => setNewComment({ ...newComment, body: e.target.value })}
             />
-            <Button onClick={addComment}>댓글 추가</Button>
+            <Button onClick={addCommentHandler}>댓글 추가</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -560,7 +560,7 @@ const PostsManager = () => {
               value={selectedComment?.body || ""}
               onChange={(e) => selectedComment && setSelectedComment({ ...selectedComment, body: e.target.value })}
             />
-            <Button onClick={updateComment}>댓글 업데이트</Button>
+            <Button onClick={updateCommentHandler}>댓글 업데이트</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -10,6 +10,8 @@ import { User } from "../../../../entities/user/types"
 const fetchPostsWithAuthors = async (params: {
   limit: number
   skip: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
 }): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
     fetchPosts(params),
@@ -24,7 +26,12 @@ const fetchPostsWithAuthors = async (params: {
   return { posts: postsWithUsers, total: postsData.total }
 }
 
-export const usePostsWithAuthorsQuery = (params: { limit: number; skip: number }) => {
+export const usePostsWithAuthorsQuery = (params: { 
+  limit: number; 
+  skip: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}) => {
   return useQuery({
     queryKey: ["posts-with-authors", params],
     queryFn: () => fetchPostsWithAuthors(params),

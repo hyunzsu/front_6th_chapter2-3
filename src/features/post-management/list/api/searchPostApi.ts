@@ -5,14 +5,39 @@ import { api } from "../../../../shared/lib"
 /**
  * 게시물 검색 API
  */
-export const fetchSearchPosts = async (query: string): Promise<PostsResponse> => {
-  return api.get<PostsResponse>(`/posts/search?q=${query}`)
+export const fetchSearchPosts = async (params: {
+  query: string
+  limit: number
+  skip: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+}): Promise<PostsResponse> => {
+  const queryParams = new URLSearchParams({
+    q: params.query,
+    limit: params.limit.toString(),
+    skip: params.skip.toString(),
+  })
+
+  const actualSortBy = params.sortBy === "none" ? "id" : params.sortBy
+
+  if (actualSortBy && params.sortOrder) {
+    queryParams.set("sortBy", actualSortBy)
+    queryParams.set("order", params.sortOrder)
+  }
+
+  return api.get<PostsResponse>(`/posts/search?${queryParams.toString()}`)
 }
 
-export const useSearchPostsQuery = (query: string) => {
+export const useSearchPostsQuery = (params: {
+  query: string
+  limit: number
+  skip: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+}) => {
   return useQuery({
-    queryKey: ["search-posts", query],
-    queryFn: () => fetchSearchPosts(query),
-    enabled: !!query.trim(),
+    queryKey: ["search-posts", params],
+    queryFn: () => fetchSearchPosts(params),
+    enabled: !!params.query.trim(),
   })
 }

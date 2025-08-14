@@ -16,7 +16,11 @@ export const PostManagerList = () => {
   const searchQuery = useAtomValue(postsSearchQueryAtom)
   const selectedTag = useAtomValue(postsSelectedTagAtom)
 
-  const addPostModal = useModal()
+  const {
+    isModalOpen: isAddPostModalOpen,
+    handleModalOpen: handleAddPostModalOpen,
+    handleModalClose: handleAddPostModalClose,
+  } = useModal()
 
   // useQuery hooks
   const { data: postsData, isLoading: postsLoading } = usePostsWithAuthorsQuery({ limit, skip })
@@ -35,7 +39,7 @@ export const PostManagerList = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>게시물 관리자</span>
-            <Button onClick={addPostModal.handleModalOpen}>
+            <Button onClick={handleAddPostModalOpen}>
               <Plus className="w-4 h-4 mr-2" />
               게시물 추가
             </Button>
@@ -55,7 +59,7 @@ export const PostManagerList = () => {
         </CardContent>
       </Card>
 
-      <PostFormDialog mode="create" isOpen={addPostModal.isModalOpen} onClose={addPostModal.handleModalClose} />
+      <PostFormDialog mode="create" isOpen={isAddPostModalOpen} onClose={handleAddPostModalClose} />
     </>
   )
 }

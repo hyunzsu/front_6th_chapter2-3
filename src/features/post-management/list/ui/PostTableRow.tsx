@@ -16,7 +16,11 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
   const selectedTag = useAtomValue(postsSelectedTagAtom)
   const [, setSelectedTag] = useAtom(postsSelectedTagAtom)
 
-  const userModal = useModal()
+  const {
+    isModalOpen: isUserModalOpen,
+    handleModalOpen: handleUserModalOpen,
+    handleModalClose: handleUserModalClose,
+  } = useModal()
 
   // 하이라이트 함수
   const highlightText = (text: string, highlight: string) => {
@@ -38,7 +42,7 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
   }
 
   const handleUserClick = () => {
-    userModal.handleModalOpen()
+    handleUserModalOpen()
   }
 
   return (
@@ -95,8 +99,8 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
 
       {/* 사용자 모달 */}
       <UserInfoDialog
-        isOpen={userModal.isModalOpen}
-        onClose={userModal.handleModalClose}
+        isOpen={isUserModalOpen}
+        onClose={handleUserModalClose}
         userId={post.author?.id || null}
       />
     </>

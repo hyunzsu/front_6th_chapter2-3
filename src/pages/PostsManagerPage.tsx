@@ -16,9 +16,8 @@ import { useTagsQuery } from "../entities/tag/api"
 import { useCommentsQuery } from "../entities/comment/api"
 import { useUserQuery } from "../entities/user/api"
 
-import { createPost } from "../features/post-management/create/api"
-import { updatePostApi } from "../features/post-management/update/api"
-import { deletePostApi } from "../features/post-management/update/api"
+import { useCreatePost } from "../features/post-management/create/api"
+import { useUpdatePost, useDeletePost } from "../features/post-management/update/api"
 
 import { useCreateComment } from "../features/comment-management/create/api"
 import { useDeleteComment, useUpdateComment } from "../features/comment-management/update/api"
@@ -73,6 +72,10 @@ const PostsManager = () => {
   const { mutate: updateComment } = useUpdateComment()
   const { mutate: deleteComment } = useDeleteComment()
   const { mutate: likeComment } = useLikeComment()
+  
+  const { mutate: createPost } = useCreatePost()
+  const { mutate: updatePostMutation } = useUpdatePost()
+  const { mutate: deletePostMutation } = useDeletePost()
 
   // 현재 표시할 데이터 결정
   const currentData = searchQuery ? searchData : selectedTag ? tagData : postsData
@@ -85,42 +88,49 @@ const PostsManager = () => {
   // ------------------------------------------------------------
 
   // 5. 게시물 추가
-  const addPost = async (): Promise<void> => {
-    try {
-      await createPost(newPost)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setShowAddDialog(false)
-      setNewPost({ title: "", body: "", userId: 1 })
-    } catch (error) {
-      console.error("게시물 추가 오류:", error)
-    }
-  }
+  const addPostHandler = useCallback((): void => {
+    createPost(newPost, {
+      onSuccess: () => {
+        setShowAddDialog(false)
+        setNewPost({ title: "", body: "", userId: 1 })
+      },
+      onError: (error) => {
+        console.error("게시물 추가 오류:", error)
+      },
+    })
+  }, [createPost, newPost])
 
   // 6. 게시물 수정
-  const updatePost = async (): Promise<void> => {
+  const updatePostHandler = useCallback((): void => {
     if (!selectedPost) return
 
-    try {
-      await updatePostApi(selectedPost.id, selectedPost)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-      setShowEditDialog(false)
-    } catch (error) {
-      console.error("게시물 업데이트 오류:", error)
-    }
-  }
+    updatePostMutation(
+      { id: selectedPost.id, data: { title: selectedPost.title, body: selectedPost.body } },
+      {
+        onSuccess: () => {
+          setShowEditDialog(false)
+        },
+        onError: (error) => {
+          console.error("게시물 업데이트 오류:", error)
+        },
+      },
+    )
+  }, [updatePostMutation, selectedPost])
 
   // 7. 게시물 삭제
-  const deletePost = async (id: number): Promise<void> => {
-    try {
-      await deletePostApi(id)
-      // TODO: 캐시 무효화로 처리할 예정
-      window.location.reload()
-    } catch (error) {
-      console.error("게시물 삭제 오류:", error)
-    }
-  }
+  const deletePostHandler = useCallback(
+    (id: number): void => {
+      deletePostMutation(
+        { id },
+        {
+          onError: (error) => {
+            console.error("게시물 삭제 오류:", error)
+          },
+        },
+      )
+    },
+    [deletePostMutation],
+  )
 
   // ------------------------------------------------------------
   // 댓글 관련 함수
@@ -314,7 +324,7 @@ const PostsManager = () => {
                 >
                   <Edit2 className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => deletePost(post.id)}>
+                <Button variant="ghost" size="sm" onClick={() => deletePostHandler(post.id)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -502,7 +512,7 @@ const PostsManager = () => {
                 setNewPost({ ...newPost, userId: Number(e.target.value) })
               }
             />
-            <Button onClick={addPost}>게시물 추가</Button>
+            <Button onClick={addPostHandler}>게시물 추가</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -525,7 +535,7 @@ const PostsManager = () => {
               value={selectedPost?.body || ""}
               onChange={(e) => selectedPost && setSelectedPost({ ...selectedPost, body: e.target.value })}
             />
-            <Button onClick={updatePost}>게시물 업데이트</Button>
+            <Button onClick={updatePostHandler}>게시물 업데이트</Button>
           </div>
         </DialogContent>
       </Dialog>

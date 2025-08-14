@@ -7,7 +7,7 @@ import { User } from "../../../../entities/user/types"
 /**
  * 게시물 + 작성자 정보 복합 조회
  */
-export const fetchPostsWithAuthors = async (params: {
+const fetchPostsWithAuthors = async (params: {
   limit: number
   skip: number
 }): Promise<{ posts: PostWithAuthor[]; total: number }> => {

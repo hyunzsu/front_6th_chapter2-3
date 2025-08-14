@@ -5,7 +5,7 @@ import { UserProfile } from "../types"
 /**
  * 사용자 상세 정보 조회
  */
-export const fetchUserById = async (id: number): Promise<UserProfile> => {
+const fetchUserById = async (id: number): Promise<UserProfile> => {
   return api.get<UserProfile>(`/users/${id}`)
 }
 

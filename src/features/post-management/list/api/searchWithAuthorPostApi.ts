@@ -2,16 +2,14 @@ import { useQuery } from "@tanstack/react-query"
 import { Post, PostWithAuthor } from "../../../../entities/post/types"
 import { fetchUsers } from "../../../../entities/user/api"
 import { User } from "../../../../entities/user/types"
-import { searchPosts } from "./searchPostApi"
+import { fetchSearchPosts } from "./searchPostApi"
 
 /**
  * 검색된 게시물 + 작성자 정보 복합 조회
  */
-export const fetchSearchPostsWithAuthors = async (
-  query: string,
-): Promise<{ posts: PostWithAuthor[]; total: number }> => {
+const fetchSearchPostsWithAuthors = async (query: string): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
-    searchPosts(query),
+    fetchSearchPosts(query),
     fetchUsers({ limit: 0, select: "username,image" }),
   ])
 

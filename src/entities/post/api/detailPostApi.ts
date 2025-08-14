@@ -5,7 +5,7 @@ import { Post } from "../types"
 /**
  * 게시물 상세 조회
  */
-export const fetchPostById = async (id: number): Promise<Post> => {
+const fetchPostById = async (id: number): Promise<Post> => {
   return api.get<Post>(`/posts/${id}`)
 }
 

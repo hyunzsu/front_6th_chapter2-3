@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query"
 import { Post, PostWithAuthor } from "../../../../entities/post/types"
 import { fetchUsers } from "../../../../entities/user/api"
 import { User } from "../../../../entities/user/types"
-import { getPostsByTag } from "./filterPostApi"
+import { fetchPostsByTag } from "./filterPostApi"
 
 /**
  * 태그별 게시물 + 작성자 정보 복합 조회
  */
-export const fetchPostsByTagWithAuthors = async (tag: string): Promise<{ posts: PostWithAuthor[]; total: number }> => {
+const fetchPostsByTagWithAuthors = async (tag: string): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
-    getPostsByTag(tag),
+    fetchPostsByTag(tag),
     fetchUsers({ limit: 0, select: "username,image" }),
   ])
 

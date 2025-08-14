@@ -23,11 +23,9 @@ import { deletePostApi } from "../features/post-management/update/api"
 import { createComment } from "../features/comment-management/create/api"
 import { deleteCommentApi, updateCommentApi } from "../features/comment-management/update/api"
 import { likeCommentApi } from "../features/comment-management/interactions/api"
-import {
-  usePostsByTagWithAuthorsQuery,
-  usePostsWithAuthorsQuery,
-  useSearchPostsWithAuthorsQuery,
-} from "../features/post-management/list/api"
+import { usePostsWithAuthorsQuery } from "../features/post-management/list/api"
+import { usePostsByTagQuery } from "../features/post-management/list/api/filterPostApi"
+import { useSearchPostsQuery } from "../features/post-management/list/api/searchPostApi"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -66,8 +64,8 @@ const PostsManager = () => {
   // useQuery hooks
   const { data: tags = [] } = useTagsQuery()
   const { data: postsData, isLoading: postsLoading } = usePostsWithAuthorsQuery({ limit, skip })
-  const { data: searchData, isLoading: searchLoading } = useSearchPostsWithAuthorsQuery(searchQuery)
-  const { data: tagData, isLoading: tagLoading } = usePostsByTagWithAuthorsQuery(selectedTag)
+  const { data: searchData, isLoading: searchLoading } = useSearchPostsQuery(searchQuery)
+  const { data: tagData, isLoading: tagLoading } = usePostsByTagQuery(selectedTag)
   const { data: selectedUser = null } = useUserQuery(selectedUserId || 0)
   const { data: commentsData } = useCommentsQuery(selectedPostId || 0)
 

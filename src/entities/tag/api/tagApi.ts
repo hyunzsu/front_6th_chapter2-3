@@ -5,7 +5,7 @@ import { Tag } from "../types"
 /**
  * 태그 목록 조회
  */
-export const fetchTags = async (): Promise<Tag[]> => {
+const fetchTags = async (): Promise<Tag[]> => {
   return api.get<Tag[]>("/posts/tags")
 }
 

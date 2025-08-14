@@ -5,7 +5,7 @@ import { CommentsResponse } from "../types"
 /**
  * 특정 게시물의 댓글 목록 조회
  */
-export const fetchComments = async (postId: number): Promise<CommentsResponse> => {
+const fetchComments = async (postId: number): Promise<CommentsResponse> => {
   return api.get<CommentsResponse>(`/comments/post/${postId}`)
 }
 

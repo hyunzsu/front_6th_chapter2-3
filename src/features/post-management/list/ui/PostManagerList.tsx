@@ -11,9 +11,12 @@ import {
   postsSortByAtom,
   postsSortOrderAtom,
 } from "../model"
+import { usePostsUrlSync } from "../hooks"
 import { PaginationControls, SearchAndFilters, PostTable } from "./"
 
 export const PostManagerList = () => {
+  usePostsUrlSync()
+
   const limit = useAtomValue(postsLimitAtom)
   const skip = useAtomValue(postsSkipAtom)
   const searchQuery = useAtomValue(postsSearchQueryAtom)

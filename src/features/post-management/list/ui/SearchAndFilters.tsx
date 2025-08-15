@@ -1,16 +1,13 @@
 import { SearchInput } from "./SearchInput"
 import { FiltersContainer } from "./FiltersContainer"
 
-interface SearchAndFiltersProps {
-  isLoading?: boolean
-  onSearchSubmit?: () => void
-}
-
-export const SearchAndFilters = ({ isLoading = false, onSearchSubmit }: SearchAndFiltersProps) => {
+export const SearchAndFilters = () => {
   return (
     <div className="flex gap-4">
-      <SearchInput onSearchSubmit={onSearchSubmit} />
-      <FiltersContainer disabled={isLoading} />
+      {/* 검색 */}
+      <SearchInput />
+      {/* 필터 컨테이너 */}
+      <FiltersContainer />
     </div>
   )
 }

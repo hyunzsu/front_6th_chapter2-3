@@ -56,11 +56,9 @@ export const PostManagerList = () => {
     <CardContent>
       <div className="flex flex-col gap-4">
         {/* 검색 및 필터 컨트롤 */}
-        <SearchAndFilters isLoading={isLoading} />
-
+        <SearchAndFilters />
         {/* 게시물 테이블 */}
         <PostTable posts={posts} isLoading={isLoading} />
-
         {/* 페이지네이션 */}
         <PaginationControls total={total} />
       </div>

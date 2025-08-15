@@ -9,7 +9,7 @@ import { fetchSearchPosts } from "./searchPostApi"
  */
 const fetchSearchPostsWithAuthors = async (query: string): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
-    fetchSearchPosts(query),
+    fetchSearchPosts({ query, limit: 0, skip: 0, sortBy: "none", sortOrder: "asc" }),
     fetchUsers({ limit: 0, select: "username,image" }),
   ])
 

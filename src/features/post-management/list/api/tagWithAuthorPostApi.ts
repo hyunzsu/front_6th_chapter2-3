@@ -9,7 +9,7 @@ import { fetchPostsByTag } from "./filterPostApi"
  */
 const fetchPostsByTagWithAuthors = async (tag: string): Promise<{ posts: PostWithAuthor[]; total: number }> => {
   const [postsData, usersData] = await Promise.all([
-    fetchPostsByTag(tag),
+    fetchPostsByTag({ tag, limit: 0, skip: 0, sortBy: "none", sortOrder: "asc" }),
     fetchUsers({ limit: 0, select: "username,image" }),
   ])
 

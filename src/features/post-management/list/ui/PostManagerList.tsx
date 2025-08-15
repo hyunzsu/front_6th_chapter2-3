@@ -1,8 +1,5 @@
-import { Plus } from "lucide-react"
 import { useAtomValue } from "jotai"
-import { Button } from "../../../../shared/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../../../../shared/ui/card"
-import { useModal } from "../../../../shared/hooks/useModal"
+import { CardContent } from "../../../../shared/ui/card"
 import { usePostsWithAuthorsQuery } from "../api"
 import { usePostsByTagQuery } from "../api/filterPostApi"
 import { useSearchPostsQuery } from "../api/searchPostApi"
@@ -15,7 +12,6 @@ import {
   postsSortOrderAtom,
 } from "../model"
 import { PaginationControls, SearchAndFilters, PostTable } from "./"
-import { PostFormDialog } from "../../shared/ui"
 
 export const PostManagerList = () => {
   const limit = useAtomValue(postsLimitAtom)
@@ -24,12 +20,6 @@ export const PostManagerList = () => {
   const selectedTag = useAtomValue(postsSelectedTagAtom)
   const sortBy = useAtomValue(postsSortByAtom)
   const sortOrder = useAtomValue(postsSortOrderAtom)
-
-  const {
-    isModalOpen: isAddPostModalOpen,
-    handleModalOpen: handleAddPostModalOpen,
-    handleModalClose: handleAddPostModalClose,
-  } = useModal()
 
   // useQuery hooks
   const { data: postsData, isLoading: postsLoading } = usePostsWithAuthorsQuery({
@@ -60,32 +50,17 @@ export const PostManagerList = () => {
   const isLoading = postsLoading || searchLoading || tagLoading
 
   return (
-    <>
-      <Card className="w-full max-w-6xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>게시물 관리자</span>
-            <Button onClick={handleAddPostModalOpen}>
-              <Plus className="w-4 h-4 mr-2" />
-              게시물 추가
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            {/* 검색 및 필터 컨트롤 */}
-            <SearchAndFilters isLoading={isLoading} />
+    <CardContent>
+      <div className="flex flex-col gap-4">
+        {/* 검색 및 필터 컨트롤 */}
+        <SearchAndFilters isLoading={isLoading} />
 
-            {/* 게시물 테이블 */}
-            <PostTable posts={posts} isLoading={isLoading} />
+        {/* 게시물 테이블 */}
+        <PostTable posts={posts} isLoading={isLoading} />
 
-            {/* 페이지네이션 */}
-            <PaginationControls total={total} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <PostFormDialog mode="create" isOpen={isAddPostModalOpen} onClose={handleAddPostModalClose} />
-    </>
+        {/* 페이지네이션 */}
+        <PaginationControls total={total} />
+      </div>
+    </CardContent>
   )
 }

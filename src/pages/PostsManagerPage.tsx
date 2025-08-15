@@ -11,6 +11,8 @@ import {
   postsQueryStringAtom,
 } from "../features/post-management/list/model"
 import { PostManagerList } from "../features/post-management/list/ui"
+import { Card } from "../shared/ui/card"
+import { CreateButton } from "../features/post-management/create/ui"
 
 const PostsManager = () => {
   const navigate = useNavigate()
@@ -53,7 +55,14 @@ const PostsManager = () => {
     setSortOrder((params.get("sortOrder") as "asc" | "desc") || "asc")
   }, [location.search, setLimit, setPage, setSearchQuery, setSelectedTag, setSortBy, setSortOrder])
 
-  return <PostManagerList />
+  return (
+    <>
+      <Card className="w-full max-w-6xl mx-auto">
+        <CreateButton />
+        <PostManagerList />
+      </Card>
+    </>
+  )
 }
 
 export default PostsManager

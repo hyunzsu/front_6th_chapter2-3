@@ -6,6 +6,7 @@ import { postsSearchQueryAtom, postsSelectedTagAtom } from "../model"
 import { useModal } from "../../../../shared/hooks/useModal"
 import { UserInfoDialog } from "../../../user-profile/ui/UserInfoDialog"
 import { PostControlPanel } from "./PostControlPanel"
+import { splitTextForHighlight } from "../../../../shared/lib"
 
 interface PostTableRowProps {
   post: PostWithAuthor
@@ -22,19 +23,9 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
     handleModalClose: handleUserModalClose,
   } = useModal()
 
-  // 하이라이트 함수
-  const highlightText = (text: string, highlight: string) => {
-    if (!text) return null
-    if (!highlight.trim()) {
-      return <span>{text}</span>
-    }
-    const regex = new RegExp(`(${highlight})`, "gi")
-    const parts = text.split(regex)
-    return (
-      <span>
-        {parts.map((part, i) => (regex.test(part) ? <mark key={i}>{part}</mark> : <span key={i}>{part}</span>))}
-      </span>
-    )
+  const renderHighlightedText = (text: string, query: string) => {
+    const { parts, isMatch } = splitTextForHighlight(text, query)
+    return <span>{parts.map((part, i) => (isMatch(part) ? <mark key={i}>{part}</mark> : part))}</span>
   }
 
   const handleTagClick = (tag: string) => {
@@ -59,7 +50,7 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
         {/* 제목 & 태그 */}
         <TableCell>
           <div className="space-y-1">
-            <div>{highlightText(post.title, searchQuery)}</div>
+            <div>{renderHighlightedText(post.title, searchQuery)}</div>
             <div className="flex flex-wrap gap-1">
               {post.tags?.map((tag: string) => (
                 <span

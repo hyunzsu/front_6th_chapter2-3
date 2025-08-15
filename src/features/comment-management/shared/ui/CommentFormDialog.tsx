@@ -92,14 +92,11 @@ export const CommentFormDialog = ({ mode, isOpen, onClose, comment, postId }: Co
     onClose()
   }
 
-  const title = mode === "create" ? "새 댓글 추가" : "댓글 수정"
-  const submitText = mode === "create" ? "댓글 추가" : "댓글 업데이트"
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{mode === "create" ? "새 댓글 추가" : "댓글 수정"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Textarea placeholder="댓글 내용" value={body} onChange={(e) => setBody(e.target.value)} />
@@ -108,7 +105,7 @@ export const CommentFormDialog = ({ mode, isOpen, onClose, comment, postId }: Co
               취소
             </Button>
             <Button onClick={handleSubmit} disabled={!body.trim()}>
-              {submitText}
+              {mode === "create" ? "댓글 추가" : "댓글 업데이트"}
             </Button>
           </div>
         </div>

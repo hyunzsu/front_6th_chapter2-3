@@ -94,14 +94,11 @@ export const PostFormDialog = ({ mode, isOpen, onClose, post }: PostFormDialogPr
     onClose()
   }
 
-  const dialogTitle = mode === "create" ? "새 게시물 추가" : "게시물 수정"
-  const submitText = mode === "create" ? "게시물 추가" : "게시물 업데이트"
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogTitle>{mode === "create" ? "새 게시물 추가" : "게시물 수정"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <Input placeholder="제목" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -124,7 +121,7 @@ export const PostFormDialog = ({ mode, isOpen, onClose, post }: PostFormDialogPr
               취소
             </Button>
             <Button onClick={handleSubmit} disabled={!title.trim() || !body.trim()}>
-              {submitText}
+              {mode === "create" ? "게시물 추가" : "게시물 업데이트"}
             </Button>
           </div>
         </div>

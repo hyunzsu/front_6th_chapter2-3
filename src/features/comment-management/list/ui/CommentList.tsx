@@ -22,6 +22,11 @@ export const CommentList = ({ postId, searchQuery = "" }: CommentListProps) => {
 
   return (
     <>
+      {/* 댓글 추가 모달 */}
+      {isCreateModalOpen && (
+        <CommentFormDialog mode="create" isOpen={isCreateModalOpen} onClose={handleCreateModalClose} postId={postId} />
+      )}
+
       <div className="mt-2">
         {/* 댓글 헤더 */}
         <div className="flex items-center justify-between mb-2">
@@ -43,9 +48,6 @@ export const CommentList = ({ postId, searchQuery = "" }: CommentListProps) => {
           )}
         </div>
       </div>
-
-      {/* 댓글 추가 모달 */}
-      <CommentFormDialog mode="create" isOpen={isCreateModalOpen} onClose={handleCreateModalClose} postId={postId} />
     </>
   )
 }

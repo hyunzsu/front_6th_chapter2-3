@@ -1,13 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios"
 
-const API_BASE_URL = "/api"
-
 // API 클라이언트 생성
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.MODE === "production" ? "https://dummyjson.com" : "/api",
   timeout: 5000,
+  withCredentials: false, // 이거 추가 안하면 CORS 에러 뜸
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json",
   },
 })
 

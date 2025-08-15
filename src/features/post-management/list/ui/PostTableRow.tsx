@@ -4,8 +4,8 @@ import { TableCell, TableRow } from "../../../../shared/ui/table"
 import { PostWithAuthor } from "../../../../entities/post/types"
 import { postsSearchQueryAtom, postsSelectedTagAtom } from "../model"
 import { useModal } from "../../../../shared/hooks/useModal"
-import { PostActionPanel } from "./PostActionPanel"
-import { UserInfoDialog } from "./UserInfoDialog"
+import { UserInfoDialog } from "../../../user-profile/ui/UserInfoDialog"
+import { PostControlPanel } from "./PostControlPanel"
 
 interface PostTableRowProps {
   post: PostWithAuthor
@@ -47,6 +47,11 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
 
   return (
     <>
+      {/* 사용자 모달 */}
+      {isUserModalOpen && (
+        <UserInfoDialog isOpen={isUserModalOpen} onClose={handleUserModalClose} userId={post.author?.id || null} />
+      )}
+
       <TableRow key={post.id}>
         {/* ID */}
         <TableCell>{post.id}</TableCell>
@@ -93,12 +98,9 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
 
         {/* 액션 버튼들 */}
         <TableCell>
-          <PostActionPanel post={post} />
+          <PostControlPanel post={post} />
         </TableCell>
       </TableRow>
-
-      {/* 사용자 모달 */}
-      <UserInfoDialog isOpen={isUserModalOpen} onClose={handleUserModalClose} userId={post.author?.id || null} />
     </>
   )
 }

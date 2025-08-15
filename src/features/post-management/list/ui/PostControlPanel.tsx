@@ -6,11 +6,13 @@ import { useDeletePost } from "../../update/api"
 import { useModal } from "../../../../shared/hooks/useModal"
 import { PostFormDialog, PostDetailDialog } from "../../shared/ui"
 
-interface PostActionPanelProps {
+interface PostControlPanelProps {
   post: PostWithAuthor
 }
 
-export const PostActionPanel = ({ post }: PostActionPanelProps) => {
+export const PostControlPanel = ({ post }: PostControlPanelProps) => {
+  const { mutate: deletePost } = useDeletePost()
+
   const {
     isModalOpen: isEditModalOpen,
     handleModalOpen: handleEditModalOpen,
@@ -23,8 +25,7 @@ export const PostActionPanel = ({ post }: PostActionPanelProps) => {
     handleModalClose: handleDetailModalClose,
   } = useModal()
 
-  const { mutate: deletePost } = useDeletePost()
-
+  // 삭제 핸들러
   const handleDelete = useCallback(() => {
     deletePost(
       { id: post.id },
@@ -38,6 +39,16 @@ export const PostActionPanel = ({ post }: PostActionPanelProps) => {
 
   return (
     <>
+      {/* 게시물 수정 모달 */}
+      {isEditModalOpen && (
+        <PostFormDialog mode="update" isOpen={isEditModalOpen} onClose={handleEditModalClose} post={post} />
+      )}
+
+      {/* 게시물 상세보기 모달 */}
+      {isDetailModalOpen && (
+        <PostDetailDialog isOpen={isDetailModalOpen} onClose={handleDetailModalClose} post={post} />
+      )}
+
       <div className="flex items-center gap-2">
         {/* 댓글 보기 버튼 */}
         <Button variant="ghost" size="sm" onClick={handleDetailModalOpen}>
@@ -54,12 +65,6 @@ export const PostActionPanel = ({ post }: PostActionPanelProps) => {
           <Trash2 className="w-4 h-4" />
         </Button>
       </div>
-
-      {/* 수정 모달 */}
-      <PostFormDialog mode="update" isOpen={isEditModalOpen} onClose={handleEditModalClose} post={post} />
-
-      {/* 상세보기 모달 */}
-      <PostDetailDialog isOpen={isDetailModalOpen} onClose={handleDetailModalClose} post={post} />
     </>
   )
 }

@@ -52,6 +52,11 @@ export const CommentControlPanel = ({ comment }: CommentControlPanelProps) => {
 
   return (
     <>
+      {/* 댓글 수정 모달 */}
+      {isEditModalOpen && (
+        <CommentFormDialog mode="update" isOpen={isEditModalOpen} onClose={handleEditModalClose} comment={comment} />
+      )}
+
       <div className="flex items-center space-x-1">
         {/* 좋아요 버튼 */}
         <Button variant="ghost" size="sm" onClick={handleLike}>
@@ -69,9 +74,6 @@ export const CommentControlPanel = ({ comment }: CommentControlPanelProps) => {
           <Trash2 className="w-3 h-3" />
         </Button>
       </div>
-
-      {/* 댓글 수정 모달 */}
-      <CommentFormDialog mode="update" isOpen={isEditModalOpen} onClose={handleEditModalClose} comment={comment} />
     </>
   )
 }

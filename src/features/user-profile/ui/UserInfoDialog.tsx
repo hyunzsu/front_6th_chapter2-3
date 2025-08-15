@@ -1,5 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../../shared/ui/dialog"
-import { useUserQuery } from "../../../../entities/user/api"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../shared/ui/dialog"
+import { useUserQuery } from "../../../entities/user/api"
 
 interface UserInfoDialogProps {
   isOpen: boolean

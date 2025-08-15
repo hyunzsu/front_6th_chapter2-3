@@ -1,7 +1,7 @@
 import { useAtom, useAtomValue } from "jotai"
 import { Button } from "../../../../shared/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../shared/ui/select"
-import { postsLimitAtom, postsSkipAtom, postsPageAtom, setPostsPageAtom, setPostsLimitAtom } from "../store"
+import { postsLimitAtom, postsSkipAtom, postsPageAtom, setPostsPageAtom, setPostsLimitAtom } from "../model"
 
 interface PaginationControlsProps {
   total: number

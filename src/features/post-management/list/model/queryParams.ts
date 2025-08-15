@@ -1,4 +1,3 @@
-// src/features/post-management/list/store/queryParams.ts
 import { atom } from "jotai"
 
 /** 게시물 목록 페이지네이션 */
@@ -28,7 +27,7 @@ export const INIT_POST_SEARCH_PARAMS = {
   sortOrder: "asc" as const,
 }
 
-/** 게시물 목록 조회 조건 (query string) - careid 패턴 */
+/** 게시물 목록 조회 조건 (query string) */
 export const postsQueryStringAtom = atom((get) => {
   const limit = get(postsLimitAtom)
   const skip = get(postsSkipAtom)
@@ -58,7 +57,7 @@ export const postsQueryStringAtom = atom((get) => {
   return searchParams.toString()
 })
 
-/** 필터 적용 여부 확인 - careid 패턴 */
+/** 필터 적용 여부 확인 */
 export const hasPostsFilterAtom = atom((get) => {
   const searchQuery = get(postsSearchQueryAtom)
   const selectedTag = get(postsSelectedTagAtom)
@@ -67,7 +66,7 @@ export const hasPostsFilterAtom = atom((get) => {
   return searchQuery.trim() !== "" || selectedTag !== "all" || sortBy !== "none"
 })
 
-/** 모든 필터 초기화 - careid 패턴 */
+/** 모든 필터 초기화 */
 export const resetPostsFiltersAtom = atom(null, (_, set) => {
   set(postsLimitAtom, 10)
   set(postsSkipAtom, 0)

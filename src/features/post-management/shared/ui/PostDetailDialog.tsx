@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../../shared/ui/dialog"
 import { PostWithAuthor } from "../../../../entities/post/types"
-import { postsSearchQueryAtom } from "../../list/store"
+import { postsSearchQueryAtom } from "../../list/model"
 import { CommentList } from "../../../comment-management/list/ui"
 
 interface PostDetailDialogProps {

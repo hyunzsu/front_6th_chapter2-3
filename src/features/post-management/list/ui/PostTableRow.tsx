@@ -2,7 +2,7 @@ import { ThumbsDown, ThumbsUp } from "lucide-react"
 import { useAtom, useAtomValue } from "jotai"
 import { TableCell, TableRow } from "../../../../shared/ui/table"
 import { PostWithAuthor } from "../../../../entities/post/types"
-import { postsSearchQueryAtom, postsSelectedTagAtom } from "../store"
+import { postsSearchQueryAtom, postsSelectedTagAtom } from "../model"
 import { useModal } from "../../../../shared/hooks/useModal"
 import { PostActionPanel } from "./PostActionPanel"
 import { UserInfoDialog } from "./UserInfoDialog"
@@ -98,11 +98,7 @@ export const PostTableRow = ({ post }: PostTableRowProps) => {
       </TableRow>
 
       {/* 사용자 모달 */}
-      <UserInfoDialog
-        isOpen={isUserModalOpen}
-        onClose={handleUserModalClose}
-        userId={post.author?.id || null}
-      />
+      <UserInfoDialog isOpen={isUserModalOpen} onClose={handleUserModalClose} userId={post.author?.id || null} />
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { useAtom } from "jotai"
 import { useTagsQuery } from "../../../../entities/tag/api"
-import { postsSelectedTagAtom, postsSortByAtom, postsSortOrderAtom, setPostsPageAtom } from "../store"
+import { postsSelectedTagAtom, postsSortByAtom, postsSortOrderAtom, setPostsPageAtom } from "../model"
 import { FilterSelect } from "./FilterSelect"
 
 interface FiltersContainerProps {

@@ -1,7 +1,7 @@
 import { useAtom } from "jotai"
 import { Search } from "lucide-react"
 import { Input } from "../../../../shared/ui/input"
-import { postsSearchQueryAtom, setPostsPageAtom } from "../store"
+import { postsSearchQueryAtom, setPostsPageAtom } from "../model"
 
 interface SearchInputProps {
   onSearchSubmit?: () => void

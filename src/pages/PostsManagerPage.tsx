@@ -9,7 +9,7 @@ import {
   setPostsPageAtom,
   setPostsLimitAtom,
   postsQueryStringAtom,
-} from "../features/post-management/list/store"
+} from "../features/post-management/list/model"
 import { PostManagerList } from "../features/post-management/list/ui"
 
 const PostsManager = () => {
